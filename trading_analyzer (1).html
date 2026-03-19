@@ -1,0 +1,3153 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Analyzer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e14;--bg2:#111620;--bg3:#181e2a;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --green:#00d68f;--green-dim:rgba(0,214,143,0.12);
+  --red:#ff4d6a;--red-dim:rgba(255,77,106,0.12);
+  --amber:#ffb547;--amber-dim:rgba(255,181,71,0.12);
+  --blue:#4d9fff;--blue-dim:rgba(77,159,255,0.12);
+  --text:#e8eaf0;--text2:#8892a4;--text3:#4a5568;
+  --mono:'JetBrains Mono',monospace;--sans:'DM Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;min-height:100vh}
+.app{max-width:880px;margin:0 auto;padding:16px}
+.breaking-banner{display:none;background:var(--red);color:#000;padding:12px 16px;border-radius:10px;margin-bottom:16px;cursor:pointer}
+.breaking-banner.show{display:flex;align-items:center;gap:10px}
+.breaking-text{font-size:13px;font-weight:600;flex:1}
+.breaking-close{background:rgba(0,0,0,0.2);border:none;color:#000;font-size:12px;padding:3px 8px;border-radius:4px;cursor:pointer}
+.header{display:flex;align-items:center;gap:10px;padding:0 0 16px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.hdot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.header h1{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;font-family:var(--mono)}
+.clock{font-size:12px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+.icon-btn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text3);font-size:14px;padding:5px 10px;cursor:pointer;margin-left:4px}
+.icon-btn:hover{border-color:var(--border2);color:var(--text)}
+.tabs{display:flex;gap:3px;margin-bottom:16px;background:var(--bg2);padding:3px;border-radius:10px;border:1px solid var(--border);overflow-x:auto}
+.tab{flex:1;padding:8px 4px;border-radius:7px;border:none;background:transparent;color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;font-family:var(--sans);transition:all .2s;white-space:nowrap;min-width:55px}
+.tab.active{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.panel{display:none;animation:fadein .2s ease}.panel.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--mono);margin-bottom:6px}
+textarea.inp{width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:13px;font-family:var(--sans);resize:vertical;min-height:100px;outline:none;line-height:1.6}
+input.inp,select.inp{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;font-family:var(--sans);width:100%}
+input.inp{font-family:var(--mono)}
+textarea.inp:focus,input.inp:focus,select.inp:focus{border-color:var(--border2)}
+textarea.inp::placeholder,input.inp::placeholder{color:var(--text3)}
+select.inp option{background:var(--bg3)}
+.row{display:flex;gap:8px;margin-top:8px;align-items:center}
+.btn-green{flex:1;padding:10px;background:var(--green);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-green:hover{opacity:.85}.btn-green:disabled{background:var(--bg3);color:var(--text3);cursor:not-allowed}
+.btn-sec{width:100%;padding:9px;background:transparent;border:1px solid var(--border2);color:var(--text);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--sans);margin-top:6px}
+.btn-sec:hover{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+.btn-ghost{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text3);font-size:11px;font-family:var(--mono);padding:3px 10px;cursor:pointer}
+.btn-ghost:hover{border-color:var(--red);color:var(--red)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.result-box{margin-top:14px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.result-hdr{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.bull{background:var(--green-dim);color:var(--green)}.bear{background:var(--red-dim);color:var(--red)}
+.neut{background:var(--amber-dim);color:var(--amber)}.flat{background:rgba(136,146,164,0.12);color:var(--text2)}
+.result-body{padding:14px;font-size:13px;line-height:1.85;color:var(--text2);white-space:pre-wrap}
+.result-body b{color:var(--text);font-weight:500}
+.err{background:var(--red-dim);border:1px solid var(--red);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--red);margin-top:10px;font-family:var(--mono);line-height:1.5}
+.info{background:var(--blue-dim);border:1px solid var(--blue);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);margin-bottom:12px;font-family:var(--mono)}
+@keyframes blink{0%,100%{opacity:.15}50%{opacity:1}}
+.dots span{animation:blink 1.2s infinite;display:inline-block;margin:0 2px}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+.wl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:14px}
+.tc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative}
+.tc:hover{border-color:var(--border2)}
+.tc-name{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.tc-price{font-family:var(--mono);font-size:20px;font-weight:600;margin-bottom:2px}
+.tc-chg{font-family:var(--mono);font-size:11px}.tc-time{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:4px}
+.tc-del{position:absolute;top:6px;right:6px;background:transparent;border:none;color:var(--text3);font-size:12px;cursor:pointer;padding:2px 4px;border-radius:4px}
+.tc-del:hover{color:var(--red)}
+.up{color:var(--green)}.dn{color:var(--red)}.nu{color:var(--text2)}.ld{color:var(--text3);font-size:16px}
+.api-notice{background:var(--amber-dim);border:1px solid var(--amber);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--amber);margin-bottom:12px;font-family:var(--mono);line-height:1.7}
+.api-notice a{color:var(--amber)}
+.add-row{display:flex;gap:8px;margin-bottom:8px}.add-row input{flex:1}
+.ref-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.ref-info{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.alarm-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.alarm-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);flex-shrink:0}
+.alarm-fired{background:var(--amber) !important;box-shadow:0 0 6px var(--amber) !important}
+.alarm-info{font-size:12px;color:var(--text2);flex:1;font-family:var(--mono)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.field{display:flex;flex-direction:column;gap:5px}.full{grid-column:1/-1}
+.trade-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:6px}
+.trade-card:hover{border-color:var(--border2)}
+.ttop{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.tasset{font-family:var(--mono);font-size:13px;font-weight:600}
+.tdir{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;font-family:var(--mono)}
+.long{background:var(--green-dim);color:var(--green)}.short{background:var(--red-dim);color:var(--red)}
+.tdate{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+.treason{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px}
+.tmeta{display:flex;gap:12px;margin-bottom:6px}
+.tmeta span{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.tmeta span b{color:var(--text2);font-weight:400}
+.orow{display:flex;gap:5px}
+.obtn{flex:1;padding:4px;border-radius:6px;border:1px solid var(--border);background:transparent;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--mono);color:var(--text3)}
+.obtn.win{border-color:var(--green);background:var(--green-dim);color:var(--green)}
+.obtn.loss{border-color:var(--red);background:var(--red-dim);color:var(--red)}
+.obtn.open{border-color:var(--amber);background:var(--amber-dim);color:var(--amber)}
+.dbtn{padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;font-size:11px;cursor:pointer;color:var(--text3)}
+.dbtn:hover{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+.empty{text-align:center;padding:30px;color:var(--text3);font-size:13px}
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+.scard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.slabel{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--mono);margin-bottom:4px}
+.sval{font-size:24px;font-weight:600;font-family:var(--mono)}
+.cg{color:var(--green)}.cr{color:var(--red)}.cb{color:var(--blue)}.ca{color:var(--amber)}
+.barchart{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.brow{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.blabel{font-size:11px;font-family:var(--mono);color:var(--text2);width:44px}
+.btrack{flex:1;background:var(--bg3);border-radius:4px;height:7px;overflow:hidden}
+.bfill{height:100%;border-radius:4px}.bcount{font-size:11px;font-family:var(--mono);color:var(--text3);width:18px;text-align:right}
+.stitle{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--mono);margin:14px 0 10px}
+.nieuws-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:6px;cursor:pointer}
+.nieuws-card:hover{border-color:var(--border2)}
+.nieuws-title{font-size:13px;font-weight:500;color:var(--text);line-height:1.4;margin-bottom:4px}
+.nieuws-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.nieuws-summary{font-size:12px;color:var(--text2);line-height:1.5;margin:4px 0}
+.sent-bar-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.sent-bar-track{height:12px;border-radius:6px;background:var(--bg3);overflow:hidden;margin:8px 0 4px;position:relative}
+.sent-bar-fill-bull{position:absolute;left:0;top:0;height:100%;background:var(--green)}
+.sent-bar-fill-bear{position:absolute;right:0;top:0;height:100%;background:var(--red)}
+.sent-labels{display:flex;justify-content:space-between;font-size:10px;font-family:var(--mono);color:var(--text3)}
+.agenda-filter{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:var(--mono)}
+.agenda-filter.active{border-color:var(--blue);background:var(--blue-dim);color:var(--blue)}
+.agenda-event{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:6px;display:flex;gap:12px;align-items:flex-start}
+.agenda-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.dot-hoog{background:var(--red)}.dot-midden{background:var(--amber)}.dot-laag{background:var(--green)}
+.agenda-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.agenda-desc{font-size:12px;color:var(--text2);line-height:1.5}
+.agenda-impact{font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:20px;margin-left:auto;flex-shrink:0}
+.impact-hoog{background:var(--red-dim);color:var(--red)}.impact-midden{background:var(--amber-dim);color:var(--amber)}.impact-laag{background:var(--green-dim);color:var(--green)}
+.corr-section{margin-bottom:16px}
+.corr-title{font-size:11px;font-weight:500;color:var(--text);text-transform:uppercase;letter-spacing:0.06em;font-family:var(--mono);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.corr-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.corr-row:last-child{border-bottom:none}
+.corr-trigger{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text);min-width:130px}
+.corr-effect{font-size:12px;color:var(--text2);flex:1}
+.corr-dir{font-size:10px;font-family:var(--mono);padding:2px 8px;border-radius:20px;flex-shrink:0}
+.alog-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:6px}
+.alog-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.alog-asset{font-family:var(--mono);font-size:13px;font-weight:600}
+.alog-date{font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto}
+.alog-body{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:8px}
+.alog-prices{display:flex;gap:14px;margin-bottom:8px;flex-wrap:wrap}
+.alog-price-item{font-size:11px;font-family:var(--mono);color:var(--text3)}
+.alog-price-item b{color:var(--text2);font-weight:400}
+.alog-verdict{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;font-family:var(--mono)}
+.verdict-correct{background:var(--green-dim);color:var(--green)}.verdict-wrong{background:var(--red-dim);color:var(--red)}.verdict-pending{background:var(--amber-dim);color:var(--amber)}
+.check-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--blue);background:var(--blue-dim);color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--mono)}
+.track-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;gap:20px;flex-wrap:wrap}
+.track-item{font-size:11px;font-family:var(--mono);color:var(--text3)}
+.track-item b{font-size:18px;font-weight:600;display:block;margin-bottom:2px}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px;margin-bottom:14px}
+.cat-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.ps-result{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-top:12px}
+.ps-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px}
+.ps-row:last-child{border-bottom:none}
+.ps-label{color:var(--text2)}.ps-value{font-family:var(--mono);font-weight:600;color:var(--text)}
+.export-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.btn-export{padding:6px 12px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:7px;font-size:11px;cursor:pointer;font-family:var(--mono)}
+.btn-export:hover{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.fg-gauge{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px}
+.fg-number{font-size:64px;font-weight:600;font-family:var(--mono);line-height:1;margin-bottom:6px}
+.fg-label{font-size:16px;font-weight:500;margin-bottom:14px}
+.fg-bar-track{height:12px;border-radius:6px;overflow:hidden;display:flex;margin:0 auto;max-width:400px}
+.fg-seg{height:100%}
+.fg-legend-row{display:flex;justify-content:space-between;max-width:400px;margin:6px auto 0;font-size:10px;font-family:var(--mono);color:var(--text3)}
+.hmenu-overlay{display:none;position:fixed;inset:0;z-index:90}
+.hmenu-overlay.open{display:block}
+.hmenu{position:fixed;top:0;right:-280px;width:260px;height:100vh;background:var(--bg2);border-left:1px solid var(--border2);z-index:95;padding:20px 0;transition:right .25s ease}
+.hmenu.open{right:0}
+.hmenu-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--mono);padding:0 20px 12px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.hmenu-item{display:flex;align-items:center;gap:12px;padding:12px 20px;cursor:pointer;border:none;background:transparent;color:var(--text2);font-size:13px;font-family:var(--sans);width:100%;text-align:left}
+.hmenu-item:hover,.hmenu-item.active{background:var(--bg3);color:var(--text)}
+.hmenu-icon{font-size:16px;width:22px;text-align:center}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;width:90%;max-width:460px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:13px;font-weight:600;font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:18px}
+.mfield{margin-bottom:14px}.mnote{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.6}
+.mnote a{color:var(--blue);text-decoration:none}
+.mbtns{display:flex;gap:8px;margin-top:18px}
+.btn-save{flex:1;padding:10px;background:var(--green);color:#000;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn-cancel{padding:10px 14px;background:transparent;border:1px solid var(--border2);color:var(--text2);border-radius:8px;font-size:13px;cursor:pointer}
+.saved-note{font-size:11px;color:var(--green);font-family:var(--mono);margin-top:6px;display:none}
+
+/* ─── Learn panel ─── */
+.learn-section{margin-bottom:20px}
+.learn-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.1em;font-family:var(--mono);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.insight-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
+.insight-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.insight-body{flex:1}
+.insight-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:3px}
+.insight-desc{font-size:12px;color:var(--text2);line-height:1.55}
+.insight-meta{font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:5px}
+.insight-card.warn{border-color:rgba(255,77,106,0.3);background:rgba(255,77,106,0.04)}
+.insight-card.good{border-color:rgba(0,214,143,0.3);background:rgba(0,214,143,0.04)}
+.insight-card.tip{border-color:rgba(77,159,255,0.3);background:rgba(77,159,255,0.04)}
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px}
+.pattern-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px}
+.pattern-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:4px}
+.pattern-val{font-size:22px;font-weight:600;font-family:var(--mono);margin-bottom:2px}
+.pattern-sub{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.heatmap-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.heatmap-label{font-size:11px;font-family:var(--mono);color:var(--text2);min-width:90px}
+.heatmap-track{flex:1;height:8px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.heatmap-fill{height:100%;border-radius:4px;transition:width .5s ease}
+.heatmap-pct{font-size:11px;font-family:var(--mono);color:var(--text3);min-width:36px;text-align:right}
+.heatmap-n{font-size:10px;font-family:var(--mono);color:var(--text3);min-width:28px;text-align:right}
+.ai-lesson{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.ai-lesson-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.ai-lesson-body{padding:14px;font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-wrap}
+.ai-lesson-body b{color:var(--text);font-weight:500}
+.mistake-card{background:var(--bg2);border:1px solid var(--red-dim);border-radius:10px;padding:12px;margin-bottom:8px}
+.mistake-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.mistake-why{font-size:12px;color:var(--text2);line-height:1.6;padding:8px;background:var(--bg3);border-radius:7px;border-left:3px solid var(--red)}
+.mistake-lesson{font-size:12px;color:var(--green);line-height:1.5;margin-top:8px;padding:8px;background:var(--green-dim);border-radius:7px;border-left:3px solid var(--green)}
+
+/* ─── Auto Pilot ─── */
+.ap-status{display:flex;align-items:center;gap:10px;padding:14px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+.ap-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ap-dot.running{background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 1.5s infinite}
+.ap-dot.stopped{background:var(--text3)}
+.ap-label{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.ap-meta{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.ap-toggle{padding:8px 18px;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:all .2s}
+.ap-toggle.start{background:var(--green);color:#000}
+.ap-toggle.stop{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}
+.ap-log{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.ap-log-hdr{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ap-log-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono)}
+.ap-entry{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
+.ap-entry:last-child{border-bottom:none}
+.ap-entry-time{font-size:10px;font-family:var(--mono);color:var(--text3);min-width:42px;flex-shrink:0;margin-top:2px}
+.ap-entry-body{flex:1;font-size:12px;color:var(--text2);line-height:1.5}
+.ap-entry-sig{font-size:10px;font-family:var(--mono);font-weight:600;flex-shrink:0;padding:2px 8px;border-radius:10px}
+.focus-pill{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:4px 10px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--text)}
+.focus-pill button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0;line-height:1;transition:color .15s}
+.focus-pill button:hover{color:var(--red)}
+.ap-setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.ap-setting-row:last-child{border-bottom:none}
+.ap-setting-label{color:var(--text2)}
+.ap-setting-val{font-family:var(--mono);color:var(--text)}
+.ap-progress{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.ap-prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:12px}
+.ap-prog-label{color:var(--text3);font-family:var(--mono)}
+.ap-prog-val{color:var(--text);font-family:var(--mono);font-weight:600}
+.ap-next{font-size:11px;color:var(--text3);font-family:var(--mono);text-align:center;padding:6px 0}
+
+.data-modal{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;width:90%;max-width:500px;max-height:90vh;overflow-y:auto}
+.data-modal h2{font-size:13px;font-weight:600;font-family:var(--mono);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px}
+.export-section{background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:12px}
+.export-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:10px}
+.export-item{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.export-item:last-child{border-bottom:none}
+.export-item-label{color:var(--text2)}
+.export-item-count{font-family:var(--mono);color:var(--text3);font-size:11px}
+.import-drop{border:2px dashed var(--border2);border-radius:10px;padding:24px;text-align:center;margin-bottom:12px;cursor:pointer;transition:all .2s}
+.import-drop:hover{border-color:var(--green);background:var(--green-dim)}
+.import-drop-text{font-size:13px;color:var(--text2);margin-bottom:4px}
+.import-drop-sub{font-size:11px;color:var(--text3);font-family:var(--mono)}
+.import-preview{background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;font-family:var(--mono);color:var(--text2);line-height:1.8}
+.import-warning{background:var(--amber-dim);border:1px solid var(--amber);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--amber);margin-bottom:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="breaking-banner" id="breakingBanner" onclick="openBreaking()">
+    <span style="font-size:20px;flex-shrink:0">&#x1F6A8;</span>
+    <div class="breaking-text" id="breakingText">Breaking nieuws gedetecteerd</div>
+    <button class="breaking-close" onclick="event.stopPropagation();closeBanner()">&#x2715;</button>
+  </div>
+  <div class="header">
+    <div class="hdot"></div>
+    <h1>Trading Analyzer</h1>
+    <div class="clock" id="clock"></div>
+    <button class="icon-btn" onclick="openSettings()">&#x2699;</button>
+    <button class="icon-btn" onclick="openMenu()">&#x2630;</button>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('analyzer',this)">Analyse</button>
+    <button class="tab" onclick="switchTab('scan',this)">Scan</button>
+    <button class="tab" onclick="switchTab('autopilot',this)">Auto Pilot</button>
+    <button class="tab" onclick="switchTab('nieuws',this)">Nieuws</button>
+    <button class="tab" onclick="switchTab('sentiment',this)">Sentiment</button>
+    <button class="tab" onclick="switchTab('feargreed',this)">F&amp;G</button>
+    <button class="tab" onclick="switchTab('koersen',this)">Koersen</button>
+    <button class="tab" onclick="switchTab('correlaties',this)">Correlaties</button>
+    <button class="tab" onclick="switchTab('possize',this)">Positie</button>
+  </div>
+
+  <div class="panel active" id="panel-analyzer">
+    <!-- Mode toggle -->
+    <div style="display:flex;gap:4px;margin-bottom:12px;background:var(--bg2);padding:3px;border-radius:8px;border:1px solid var(--border)">
+      <button id="modeManual" onclick="setMode('manual')" style="flex:1;padding:7px;border-radius:6px;border:none;background:var(--bg3);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans)">✎ Handmatig plakken</button>
+      <button id="modeAuto" onclick="setMode('auto')" style="flex:1;padding:7px;border-radius:6px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--sans)">⚡ Realtime via ticker</button>
+    </div>
+
+    <!-- Manual mode -->
+    <div id="modeManualDiv">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div class="label" style="margin:0">Plak nieuwsbericht</div>
+        <button class="btn-ghost" onclick="clearNews()">&#x2715; Wis</button>
+      </div>
+      <textarea class="inp" id="newsInput" placeholder="Plak hier het nieuwsbericht..."></textarea>
+      <div class="row">
+        <input class="inp" id="assetInput" placeholder="OIL, AAPL, EUR/USD..." style="width:150px;flex:none"/>
+        <button class="btn-green" id="analyzeBtn" onclick="analyzeNews()">Analyseer &#x2192;</button>
+      </div>
+    </div>
+
+    <!-- Realtime mode -->
+    <div id="modeAutoDiv" style="display:none">
+      <div class="label">Ticker invoeren — nieuws + koers wordt automatisch opgehaald</div>
+      <div class="row" style="margin-top:0;margin-bottom:12px">
+        <input class="inp" id="rtTicker" placeholder="AAPL, NVDA, TSLA..." style="flex:1" onkeydown="if(event.key==='Enter')analyzeRealtime()"/>
+        <button class="btn-green" style="flex:none;padding:10px 18px" id="rtBtn" onclick="analyzeRealtime()">⚡ Analyseer →</button>
+      </div>
+      <div id="rtStatus" style="display:none;font-size:12px;color:var(--text3);font-family:var(--mono);margin-bottom:8px"></div>
+    </div>
+
+    <div id="resultBox" style="display:none" class="result-box">
+      <div class="result-hdr">
+        <div class="label" style="margin:0">Signaal</div>
+        <div class="badge neut" id="signalBadge">&#x2014;</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto" id="assetLabel"></div>
+      </div>
+      <div class="result-body" id="resultText"></div>
+    </div>
+    <div id="errBox" style="display:none" class="err"></div>
+  </div>
+
+
+
+  <!-- AUTO PILOT -->
+  <div class="panel" id="panel-autopilot">
+    <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:2px">Auto Pilot</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Automatisch nieuws ophalen, analyseren en resultaten bijhouden voor jouw focus tickers</div>
+
+    <!-- Status -->
+    <div class="ap-status" id="apStatus">
+      <div class="ap-dot stopped" id="apDot"></div>
+      <div>
+        <div class="ap-label" id="apLabel">Gestopt</div>
+        <div class="ap-meta" id="apMeta">Configureer je focus tickers en start de auto pilot</div>
+      </div>
+      <button class="ap-toggle start" id="apToggle" onclick="toggleAutoPilot()">Start</button>
+    </div>
+
+    <!-- Progress stats -->
+    <div class="ap-progress" id="apProgress">
+      <div class="ap-prog-row">
+        <span class="ap-prog-label">Analyses vandaag</span>
+        <span class="ap-prog-val" id="apCountToday">0</span>
+      </div>
+      <div class="ap-prog-row">
+        <span class="ap-prog-label">Totaal auto-analyses</span>
+        <span class="ap-prog-val" id="apCountTotal">0</span>
+      </div>
+      <div class="ap-prog-row">
+        <span class="ap-prog-label">Auto gecheckt</span>
+        <span class="ap-prog-val" id="apCountChecked">0</span>
+      </div>
+      <div class="ap-prog-row">
+        <span class="ap-prog-label">Win rate (auto)</span>
+        <span class="ap-prog-val" id="apWinRate">—</span>
+      </div>
+      <div class="ap-prog-row" style="border-bottom:none">
+        <span class="ap-prog-label">Volgende run</span>
+        <span class="ap-prog-val" id="apNextRun">—</span>
+      </div>
+    </div>
+
+    <!-- Session summary -->
+    <div class="ap-log" style="margin-bottom:12px" id="sessionSummaryBox">
+      <div class="ap-log-hdr">
+        <div class="ap-log-title">Sessie samenvatting</div>
+        <button class="btn-ghost" onclick="renderSessionSummary()" style="padding:2px 8px;font-size:10px">↻ Ververs</button>
+      </div>
+      <div id="sessionSummary" style="padding:14px;font-size:12px;color:var(--text3);text-align:center">Laden...</div>
+    </div>
+
+    <!-- Focus tickers -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="label" style="margin-bottom:10px">Focus tickers</div>
+      <div id="focusPills" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+      <div class="add-row" style="margin-bottom:0">
+        <input class="inp" id="focusInput" placeholder="Ticker toevoegen: NVDA, USOIL..." onkeydown="if(event.key==='Enter')addFocusTicker()" style="max-width:240px"/>
+        <button class="btn-green" style="flex:none;padding:9px 14px" onclick="addFocusTicker()">+ Toevoegen</button>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="card" style="margin-bottom:12px">
+      <div class="label" style="margin-bottom:8px">Instellingen</div>
+      <div class="ap-setting-row">
+        <span class="ap-setting-label">Interval (minuten)</span>
+        <select class="inp" id="apInterval" style="width:100px">
+          <option value="15">15 min</option>
+          <option value="30" selected>30 min</option>
+          <option value="60">60 min</option>
+          <option value="120">2 uur</option>
+        </select>
+      </div>
+      <div class="ap-setting-row">
+        <span class="ap-setting-label">Auto-check resultaat na</span>
+        <select class="inp" id="apCheckDelay" style="width:100px">
+          <option value="60">1 uur</option>
+          <option value="120">2 uur</option>
+          <option value="240" selected>4 uur</option>
+          <option value="480">8 uur</option>
+        </select>
+      </div>
+      <div class="ap-setting-row">
+        <span class="ap-setting-label">Alleen tijdens markturen</span>
+        <select class="inp" id="apMarketOnly" style="width:100px">
+          <option value="1" selected>Ja (15:30-22:00)</option>
+          <option value="0">Altijd</option>
+        </select>
+      </div>
+      <div class="ap-setting-row" style="border-bottom:none">
+        <span class="ap-setting-label">Analyseer nieuws jonger dan</span>
+        <select class="inp" id="apNewsAge" style="width:100px">
+          <option value="2">2 uur</option>
+          <option value="4">4 uur</option>
+          <option value="6" selected>6 uur</option>
+          <option value="12">12 uur</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Live log -->
+    <div class="ap-log">
+      <div class="ap-log-hdr">
+        <div class="ap-log-title">Live log</div>
+        <button class="btn-ghost" onclick="clearApLog()" style="padding:2px 8px;font-size:10px">Wis</button>
+      </div>
+      <div id="apLog">
+        <div style="padding:14px;font-size:12px;color:var(--text3);text-align:center">Nog geen activiteit</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCAN TICKER -->
+  <div class="panel" id="panel-scan">
+    <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px"> Nieuws + Koers Scan</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Voer een ticker in — haalt automatisch nieuws op, kijkt naar de koersreactie, en geeft advies of er nog kans is</div>
+    <div class="add-row" style="margin-bottom:10px">
+      <input class="inp" id="scanTicker" placeholder="Bijv. AAPL, NVDA, TSLA..." onkeydown="if(event.key==='Enter')runScan()"/>
+      <button class="btn-green" style="flex:none;padding:10px 18px" id="scanBtn" onclick="runScan()">Scan →</button>
+    </div>
+    <div id="scanResult"></div>
+  </div>
+
+  <div class="panel" id="panel-nieuws">
+    <div class="info" id="nieuwsNotice" style="display:none">&#x26A0; Geen Finnhub key &mdash; ga naar &#x2699; Instellingen</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="inp" id="nieuwsTicker" placeholder="Ticker: AAPL, NVDA, TSLA..." onkeydown="if(event.key==='Enter')loadNieuws()"/>
+      <button class="btn-green" style="flex:none;padding:9px 16px" onclick="loadNieuws()">Ophalen &#x2192;</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="btn-ghost" onclick="loadGeneralNieuws()" style="padding:4px 12px">&#x1F4F0; Marktnieuws</button>
+      <button class="btn-ghost" id="breakingBtn" onclick="startBreakingCheck()" style="padding:4px 12px">&#x1F534; Start breaking check</button>
+    </div>
+    <div id="nieuwsList"></div>
+  </div>
+
+  <div class="panel" id="panel-sentiment">
+    <div class="label">Plak meerdere artikelen over hetzelfde aandeel</div>
+    <textarea class="inp" id="sentInput" style="min-height:120px" placeholder="Artikel 1: ...&#10;&#10;Artikel 2: ..."></textarea>
+    <div class="row">
+      <input class="inp" id="sentAsset" placeholder="Asset: AAPL, MARKT..." style="width:150px;flex:none"/>
+      <button class="btn-green" id="sentBtn" onclick="analyzeSentiment()">Analyseer sentiment &#x2192;</button>
+    </div>
+    <div id="sentResult" style="display:none;margin-top:12px">
+      <div class="track-box" id="sentScores" style="align-items:center"></div>
+      <div id="sentMeter" style="margin-bottom:12px"></div>
+      <div class="result-box" style="margin-top:0">
+        <div class="result-hdr">
+          <div class="label" style="margin:0">Sentiment</div>
+          <div class="badge neut" id="sentBadge">&#x2014;</div>
+        </div>
+        <div class="result-body" id="sentBody"></div>
+      </div>
+    </div>
+    <div id="sentErr" style="display:none" class="err"></div>
+  </div>
+
+  <div class="panel" id="panel-feargreed">
+    <div id="fgMeter"></div>
+    <div id="fgLegend"></div>
+  </div>
+
+  <div class="panel" id="panel-koersen">
+    <div id="apiNotice" class="api-notice" style="display:none">
+      &#x26A0; Geen Twelve Data key &mdash; ga naar &#x2699; Instellingen<br>
+      Gratis key: <a href="https://twelvedata.com" target="_blank">twelvedata.com</a>
+    </div>
+    <div class="add-row">
+      <input class="inp" id="tickerInput" placeholder="Ticker: AAPL, NVDA, USOIL..." onkeydown="if(event.key==='Enter')addTicker()"/>
+      <button class="btn-green" style="flex:none;padding:9px 16px" onclick="addTicker()">+ Toevoegen</button>
+    </div>
+    <div class="ref-row">
+      <button class="btn-ghost" onclick="refreshAll()" style="padding:4px 14px">&#x21BB; Ververs</button>
+      <div class="ref-info" id="lastRefresh">Nog niet ververst</div>
+    </div>
+    <div class="wl-grid" id="watchlistGrid"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px">
+      <div class="label">Prijsalarm (% beweging)</div>
+      <div class="add-row" style="margin-bottom:8px">
+        <input class="inp" id="alarmTicker" placeholder="Ticker" style="width:90px;flex:none"/>
+        <input class="inp" id="alarmPct" type="number" placeholder="%" min="0.1" step="0.1" style="width:65px;flex:none"/>
+        <select class="inp" id="alarmDir" style="flex:none;width:100px">
+          <option value="up">Stijging &#x25B2;</option>
+          <option value="down">Daling &#x25BC;</option>
+          <option value="both">Beide &#x2195;</option>
+        </select>
+        <button class="btn-green" style="flex:none;padding:9px 12px" onclick="addAlarm()">+ Alarm</button>
+      </div>
+      <div id="alarmList"></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-correlaties">
+    <div style="margin-bottom:14px">
+      <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px">Markt correlaties</div>
+      <div style="font-size:12px;color:var(--text3)">Als X beweegt, beweegt Y ook &mdash; essentieel voor news trading</div>
+    </div>
+    <div id="correlatiesGrid"></div>
+  </div>
+
+  <div class="panel" id="panel-possize">
+    <div style="font-size:15px;font-weight:500;color:var(--text);margin-bottom:3px">&#x1F4B0; Position Sizing</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Bereken hoeveel je kan kopen op basis van risico</div>
+    <div class="card">
+      <div class="grid2">
+        <div class="field"><div class="label">Portfolio (&#x20AC;)</div><input class="inp" id="psPortfolio" type="number" placeholder="bijv. 3500" oninput="calcPosition()"/></div>
+        <div class="field"><div class="label">Risico per trade (%)</div><input class="inp" id="psRisk" type="number" placeholder="bijv. 1" value="1" step="0.1" oninput="calcPosition()"/></div>
+        <div class="field"><div class="label">Instapprijs (&#x20AC;)</div><input class="inp" id="psEntry" type="number" placeholder="bijv. 180.50" oninput="calcPosition()"/></div>
+        <div class="field"><div class="label">Stop-loss prijs (&#x20AC;)</div><input class="inp" id="psStop" type="number" placeholder="bijv. 175.00" oninput="calcPosition()"/></div>
+        <div class="field"><div class="label">Doelprijs (&#x20AC;)</div><input class="inp" id="psTarget" type="number" placeholder="bijv. 195.00" oninput="calcPosition()"/></div>
+        <div class="field"><div class="label">Min risk/reward</div>
+          <select class="inp" id="psRR" onchange="calcPosition()">
+            <option value="2">1:2</option><option value="3" selected>1:3</option><option value="4">1:4</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="ps-result" id="psResult" style="display:none">
+      <div class="ps-row"><span class="ps-label">Max verlies</span><span class="ps-value cr" id="psMaxLoss">&#x2014;</span></div>
+      <div class="ps-row"><span class="ps-label">Aantal aandelen</span><span class="ps-value" id="psShares">&#x2014;</span></div>
+      <div class="ps-row"><span class="ps-label">Totale positie</span><span class="ps-value" id="psTotal">&#x2014;</span></div>
+      <div class="ps-row"><span class="ps-label">Stop-loss afstand</span><span class="ps-value cr" id="psStopDist">&#x2014;</span></div>
+      <div class="ps-row"><span class="ps-label">Risk/Reward</span><span class="ps-value" id="psRRResult">&#x2014;</span></div>
+      <div class="ps-row"><span class="ps-label">Advies</span><span class="ps-value" id="psAdvice">&#x2014;</span></div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-agenda">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:500;color:var(--text)">Economische agenda</div>
+      <button class="btn-ghost" onclick="loadAgenda()" style="padding:4px 12px">&#x21BB; Ververs</button>
+    </div>
+    <div id="agendaFilters" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="agenda-filter active" onclick="filterAgenda('all',this)">Alles</button>
+      <button class="agenda-filter" onclick="filterAgenda('hoog',this)">&#x1F534; Hoog</button>
+      <button class="agenda-filter" onclick="filterAgenda('midden',this)">&#x1F7E1; Midden</button>
+      <button class="agenda-filter" onclick="filterAgenda('laag',this)">&#x1F7E2; Laag</button>
+    </div>
+    <div id="agendaList"></div>
+  </div>
+
+  <div class="panel" id="panel-journal">
+    <div class="export-bar"><button class="btn-export" onclick="exportCSV('trades')">&#x2193; Export trades CSV</button></div>
+    <div class="card">
+      <div class="label">Nieuwe trade</div>
+      <div class="grid2">
+        <div class="field"><div class="label">Asset</div><input class="inp" id="jAsset" placeholder="AAPL, OIL..."/></div>
+        <div class="field"><div class="label">Richting</div>
+          <select class="inp" id="jDir"><option value="LONG">LONG &mdash; stijging</option><option value="SHORT">SHORT &mdash; daling</option></select>
+        </div>
+        <div class="field"><div class="label">Instapprijs</div><input class="inp" id="jEntry" type="number" placeholder="0.00"/></div>
+        <div class="field"><div class="label">Stop-loss</div><input class="inp" id="jStop" type="number" placeholder="0.00"/></div>
+        <div class="field full"><div class="label">Redenering</div><input class="inp" id="jReason" placeholder="Bijv: Hormuz geblokkeerd..."/></div>
+      </div>
+      <button class="btn-sec" onclick="addTrade()">+ Trade opslaan</button>
+    </div>
+    <div class="label">Mijn trades</div>
+    <div id="tradesList"></div>
+  </div>
+
+  <div class="panel" id="panel-history">
+    <div class="export-bar"><button class="btn-export" onclick="exportCSV('analyses')">&#x2193; Export analyses CSV</button></div>
+    <div class="track-box" id="trackBox"></div>
+    <div class="stitle">Nauwkeurigheid per signaal</div>
+    <div class="cat-grid" id="catGrid"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="label" style="margin:0">Analyse geschiedenis</div>
+      <button class="check-btn" onclick="checkAllPending()">&#x21BB; Check openstaande</button>
+    </div>
+    <div id="analysisList"></div>
+  </div>
+
+  <div class="panel" id="panel-stats">
+    <div class="sgrid" id="statsGrid"></div>
+    <div class="stitle">Verdeling</div>
+    <div class="barchart" id="barChart"></div>
+  </div>
+
+  <!-- LEER SYSTEEM -->
+  <div class="panel" id="panel-learn">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:15px;font-weight:500;color:var(--text)">Leer Systeem</div>
+        <div style="font-size:12px;color:var(--text3)">Wat werkt voor jou, wat niet, en waarom</div>
+      </div>
+      <button class="btn-ghost" onclick="renderLearn()" style="padding:4px 12px">↻ Ververs</button>
+    </div>
+
+    <!-- AI Lessons -->
+    <div class="learn-section">
+      <div class="learn-section-title"> AI Lessen op basis van jouw fouten</div>
+      <div id="aiLessons">
+        <div class="empty" style="padding:20px">Klik op "Genereer lessen" zodra je analyses hebt met verdichten</div>
+      </div>
+      <button class="btn-sec" id="genLessonsBtn" onclick="generateLessons()" style="margin-top:6px">Genereer AI lessen van mijn fouten</button>
+    </div>
+
+    <!-- Pattern stats -->
+    <div class="learn-section">
+      <div class="learn-section-title"> Jouw patronen</div>
+      <div class="pattern-grid" id="patternGrid"></div>
+    </div>
+
+    <!-- Accuracy heatmaps -->
+    <div class="learn-section">
+      <div class="learn-section-title">Nauwkeurigheid per categorie</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">PER SIGNAALTYPE</div>
+        <div id="heatmapSignaal"></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">PER DAG VAN DE WEEK</div>
+        <div id="heatmapDag"></div>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">PER KRACHT (STERK/MATIG/ZWAK)</div>
+        <div id="heatmapKracht"></div>
+      </div>
+    </div>
+
+    <!-- Mistake analysis -->
+    <div class="learn-section">
+      <div class="learn-section-title">Foute analyses uitgeplozen</div>
+      <div id="mistakeList"></div>
+    </div>
+
+    <!-- Learned rules (self-learning output) -->
+    <div class="learn-section">
+      <div class="learn-section-title">Geleerde regels — worden toegepast bij volgende analyses</div>
+      <div id="learnedRulesPanel"><div style="font-size:12px;color:var(--text3);padding:4px">Nog geen geleerde regels — auto pilot moet eerst analyses checken</div></div>
+    </div>
+
+    <!-- Insights -->
+    <div class="learn-section">
+      <div class="learn-section-title">Automatische inzichten</div>
+      <div id="insightsList"></div>
+    </div>
+  </div>
+
+
+<!-- DATA EXPORT/IMPORT MODAL -->
+<div class="modal-overlay" id="dataModal" onclick="if(event.target===this)closeDataModal()">
+  <div class="data-modal">
+    <h2 id="dataModalTitle">Data exporteren</h2>
+    <div id="dataModalContent"></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn-cancel" onclick="closeDataModal()">Sluiten</button>
+      <button class="btn-save" id="dataModalAction" onclick="confirmDataAction()">Exporteren</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<div class="hmenu-overlay" id="hmenuOverlay" onclick="closeMenu()"></div>
+<div class="hmenu" id="hmenu">
+  <div class="hmenu-title">Menu</div>
+  <button class="hmenu-item" onclick="switchTabMenu('journal')"><span class="hmenu-icon">&#x1F4CB;</span>Trade Logboek</button>
+  <button class="hmenu-item" onclick="switchTabMenu('history')"><span class="hmenu-icon">&#x1F4C8;</span>Analyse Geschiedenis</button>
+  <button class="hmenu-item" onclick="switchTabMenu('agenda')"><span class="hmenu-icon">&#x1F4C5;</span>Economische Agenda</button>
+  <button class="hmenu-item" onclick="switchTabMenu('stats')"><span class="hmenu-icon">&#x1F4CA;</span>Statistieken</button>
+  <button class="hmenu-item" onclick="switchTabMenu('learn')"><span class="hmenu-icon">→</span>Leer Systeem</button>
+  <div style="border-top:1px solid var(--border);margin:8px 0"></div>
+  <button class="hmenu-item" onclick="exportAllData();closeMenu()"><span class="hmenu-icon">↓</span>Data exporteren</button>
+  <button class="hmenu-item" onclick="document.getElementById('importFileInput').click();closeMenu()"><span class="hmenu-icon">↑</span>Data importeren</button>
+  <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importAllData(event)"/>
+</div>
+
+<div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
+  <div class="modal">
+    <h2>&#x2699; Instellingen</h2>
+    <div class="mfield">
+      <div class="label">Twelve Data API Key (koersen)</div>
+      <input class="inp" id="tdKeyInput" type="password" placeholder="Plak je Twelve Data key..." style="width:100%"/>
+      <div class="mnote">Gratis key: <a href="https://twelvedata.com" target="_blank">twelvedata.com</a></div>
+    </div>
+    <div class="mfield">
+      <div class="label">Finnhub API Key (nieuws)</div>
+      <input class="inp" id="fhKeyInput" type="password" placeholder="Plak je Finnhub key..." style="width:100%"/>
+      <div class="mnote">Gratis key: <a href="https://finnhub.io" target="_blank">finnhub.io</a></div>
+    </div>
+    <div class="mfield">
+      <div class="label">Portfolio waarde (&#x20AC;)</div>
+      <input class="inp" id="portfolioInput" type="number" placeholder="bijv. 3500" style="width:100%"/>
+    </div>
+    <div class="mfield">
+      <div class="label">Jouw naam</div>
+      <input class="inp" id="nameInput" placeholder="bijv. Daan" style="width:100%"/>
+    </div>
+    <div class="saved-note" id="savedNote">&#x2713; Opgeslagen!</div>
+    <div class="mbtns">
+      <button class="btn-cancel" onclick="closeSettings()">Annuleren</button>
+      <button class="btn-save" onclick="saveSettings()">Opslaan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var trades=[], watchlist=[], priceData={}, alarms=[], tid=1;
+var alarmInterval=null, breakingInterval=null, lastBreakingId=null;
+var agendaFilter='all', agendaEvents=[], breakingActive=false;
+
+function lsSave(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function lsLoad(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
+function gs(k){return localStorage.getItem(k)||'';}
+function ss(k,v){localStorage.setItem(k,v);}
+
+function init(){
+  initAutoPilot();
+  renderSessionSummary();
+  // Hook knowledge import button — set after DOM is ready
+  setTimeout(function(){
+    var kBtn = document.getElementById('knowledgeImportBtn');
+    var kInp = document.getElementById('knowledgeFileInput');
+    if(kBtn && kInp){
+      kBtn.onclick = function(){ kInp.click(); };
+      kInp.onchange = importKnowledge;
+    }
+  }, 500);
+  trades=lsLoad('trades_v2',[]);
+  tid=trades.length?Math.max.apply(null,trades.map(function(t){return t.id;}))+1:1;
+  watchlist=lsLoad('watchlist_v1',['AAPL','NVDA','USOIL']);
+  alarms=lsLoad('alarms_v1',[]);
+  renderTrades(); renderWatchlistGrid(); renderAlarms(); checkNotice();
+  if(alarms.length) startAlarmChecker();
+  var pv=gs('portfolio_val'); if(pv) document.getElementById('psPortfolio').value=pv;
+  var day=new Date().getDay();
+  var h=new Date().getHours().toString().padStart(2,'0');
+  var m=new Date().getMinutes().toString().padStart(2,'0');
+}
+
+setInterval(function(){
+  var d=new Date();
+  document.getElementById('clock').textContent=
+    d.getHours().toString().padStart(2,'0')+':'+
+    d.getMinutes().toString().padStart(2,'0')+':'+
+    d.getSeconds().toString().padStart(2,'0');
+},1000);
+
+function switchTab(n,btn){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('panel-'+n).classList.add('active');
+  if(btn) btn.classList.add('active');
+  if(n==='stats') renderStats();
+  if(n==='agenda') loadAgenda();
+  if(n==='nieuws'){var el=document.getElementById('nieuwsNotice');if(el)el.style.display=gs('fh_key')?'none':'block';}
+  if(n==='feargreed') renderFearGreed();
+  if(n==='correlaties') renderCorrelaties();
+  if(n==='koersen'){checkNotice();renderWatchlistGrid();renderAlarms();}
+  if(n==='history') renderHistory();
+  if(n==='possize'){var pv=gs('portfolio_val');if(pv)document.getElementById('psPortfolio').value=pv;}
+  if(n==='autopilot'){updateApProgress();renderSessionSummary();}
+}
+
+function switchTabMenu(n){
+  closeMenu();
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.hmenu-item').forEach(function(i){i.classList.remove('active');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('panel-'+n).classList.add('active');
+  if(n==='stats') renderStats();
+  if(n==='history') renderHistory();
+  if(n==='agenda') loadAgenda();
+}
+
+function openMenu(){document.getElementById('hmenu').classList.add('open');document.getElementById('hmenuOverlay').classList.add('open');}
+function closeMenu(){document.getElementById('hmenu').classList.remove('open');document.getElementById('hmenuOverlay').classList.remove('open');}
+
+function openSettings(){
+  document.getElementById('tdKeyInput').value=gs('td_key');
+  document.getElementById('fhKeyInput').value=gs('fh_key');
+  document.getElementById('portfolioInput').value=gs('portfolio_val');
+  document.getElementById('nameInput').value=gs('user_name');
+  document.getElementById('savedNote').style.display='none';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function closeSettings(){document.getElementById('settingsModal').classList.remove('open');}
+function saveSettings(){
+  ss('td_key',document.getElementById('tdKeyInput').value.trim());
+  ss('fh_key',document.getElementById('fhKeyInput').value.trim());
+  ss('portfolio_val',document.getElementById('portfolioInput').value.trim());
+  ss('user_name',document.getElementById('nameInput').value.trim());
+  document.getElementById('savedNote').style.display='block';
+  checkNotice();
+  setTimeout(closeSettings,900);
+}
+function checkNotice(){var el=document.getElementById('apiNotice');if(el)el.style.display=gs('td_key')?'none':'block';}
+
+async function analyzeNews(){
+  var news=document.getElementById('newsInput').value.trim();
+  var asset=document.getElementById('assetInput').value.trim()||'de markt algemeen';
+  if(!news){document.getElementById('newsInput').focus();return;}
+  var btn=document.getElementById('analyzeBtn');
+  var rb=document.getElementById('resultBox');
+  var eb=document.getElementById('errBox');
+  var rt=document.getElementById('resultText');
+  var sb=document.getElementById('signalBadge');
+  var al=document.getElementById('assetLabel');
+  btn.disabled=true; btn.textContent='Analyseren...';
+  eb.style.display='none'; rb.style.display='block';
+  sb.textContent='...'; sb.className='badge neut'; al.textContent=asset;
+  rt.innerHTML='<span class="dots"><span>&#x25CF;</span><span>&#x25CF;</span><span>&#x25CF;</span></span> Bezig...';
+  var history=lsLoad('analyses_v1',[]);
+  var checked=history.filter(function(a){return a.verdict;});
+  var correct=checked.filter(function(a){return a.verdict==='correct';}).length;
+  var cats={};
+  checked.forEach(function(a){
+    if(!cats[a.signaal])cats[a.signaal]={c:0,t:0};
+    cats[a.signaal].t++;
+    if(a.verdict==='correct')cats[a.signaal].c++;
+  });
+  var catSummary=Object.entries(cats).map(function(e){return e[0]+': '+Math.round(e[1].c/e[1].t*100)+'% ('+e[1].c+'/'+e[1].t+')';}).join(', ');
+  var trackCtx=checked.length>0?'\n\nMijn track record: '+correct+'/'+checked.length+' correct ('+Math.round(correct/checked.length*100)+'%). Per signaal: '+catSummary+'.':'';
+  var learnedRules = getLearnedRulesContext(asset);
+  var learnCtx = learnedRules ? '\n\nWAT IK AL GELEERD HEB (pas dit toe):\n'+learnedRules : '';
+  try{
+    var entryPrice=null;
+    var key=gs('td_key');
+    if(key&&asset!=='de markt algemeen'){
+      try{
+        var pr=await fetch('https://api.twelvedata.com/price?symbol='+encodeURIComponent(asset)+'&apikey='+key);
+        var pd=await pr.json();
+        if(pd.price)entryPrice=parseFloat(pd.price);
+      }catch(e2){}
+    }
+    var prompt='Je bent een ervaren news trader. Analyseer dit nieuwsbericht voor instrument: '+asset+'.'+trackCtx+learnCtx+'\n\nNIEUWS:\n'+news.slice(0,3000)+'\n\nGeef alleen dit JSON object, geen andere tekst:\n{"signaal":"BULLISH of BEARISH of NEUTRAAL of VLAK","kracht":"Sterk of Matig of Zwak","samenvatting":"1 zin","impact":"koersverwachting en waarom","al_verwerkt":"Ja of Nee of Deels","risico":"wat maakt analyse ongeldig","timing":"verwachte tijdshorizon"}';
+    var res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})
+    });
+    if(!res.ok) throw new Error('API fout '+res.status);
+    var data=await res.json();
+    var raw=(data.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var r;
+    try{r=JSON.parse(raw);}catch(e3){throw new Error('Kon resultaat niet verwerken.');}
+    var sig=(r.signaal||'').toUpperCase();
+    sb.textContent=sig+(r.kracht?' — '+r.kracht:'');
+    sb.className='badge '+(sig==='BULLISH'?'bull':sig==='BEARISH'?'bear':sig==='VLAK'?'flat':'neut');
+    rt.innerHTML='<b>Samenvatting:</b> '+(r.samenvatting||'—')+'\n\n<b>Koersverwachting:</b> '+(r.impact||'—')+'\n\n<b>Al verwerkt in koers?</b> '+(r.al_verwerkt||'—')+'\n\n<b>Risico:</b> '+(r.risico||'—')+'\n\n<b>Timing:</b> '+(r.timing||'—');
+    var analyses=lsLoad('analyses_v1',[]);
+    var d2=new Date();
+    analyses.unshift({id:Date.now(),asset:asset,signaal:sig,kracht:r.kracht||'',samenvatting:r.samenvatting||'',impact:r.impact||'',timing:r.timing||'',nieuws:news.slice(0,300),date:d2.toLocaleDateString('nl-NL'),time:d2.getHours().toString().padStart(2,'0')+':'+d2.getMinutes().toString().padStart(2,'0'),entryPrice:entryPrice,checkPrice:null,verdict:null});
+    lsSave('analyses_v1',analyses);
+  }catch(e){
+    rb.style.display='none'; eb.style.display='block';
+    eb.textContent='&#x26A0; '+(e.message||'Onbekende fout');
+  }
+  btn.disabled=false; btn.textContent='Analyseer &#x2192;';
+}
+
+function setMode(mode){
+  var isAuto=mode==='auto';
+  document.getElementById('modeManualDiv').style.display=isAuto?'none':'block';
+  document.getElementById('modeAutoDiv').style.display=isAuto?'block':'none';
+  document.getElementById('modeManual').style.background=isAuto?'transparent':'var(--bg3)';
+  document.getElementById('modeManual').style.color=isAuto?'var(--text2)':'var(--text)';
+  document.getElementById('modeAuto').style.background=isAuto?'var(--bg3)':'transparent';
+  document.getElementById('modeAuto').style.color=isAuto?'var(--text)':'var(--text2)';
+  document.getElementById('resultBox').style.display='none';
+  document.getElementById('errBox').style.display='none';
+}
+
+async function analyzeRealtime(){
+  var ticker=document.getElementById('rtTicker').value.trim().toUpperCase();
+  if(!ticker){document.getElementById('rtTicker').focus();return;}
+  var fhKey=gs('fh_key'), tdKey=gs('td_key');
+  var btn=document.getElementById('rtBtn');
+  var status=document.getElementById('rtStatus');
+  var rb=document.getElementById('resultBox'), eb=document.getElementById('errBox');
+  var sb=document.getElementById('signalBadge'), rt=document.getElementById('resultText');
+  var al=document.getElementById('assetLabel');
+  btn.disabled=true; btn.textContent='Ophalen...';
+  eb.style.display='none'; rb.style.display='none';
+  status.style.display='block';
+  try {
+    var currentPrice=null, priceChange=null;
+    if(tdKey){
+      status.textContent='📈 Koers ophalen...';
+      try{
+        var pr=await fetch('https://api.twelvedata.com/quote?symbol='+encodeURIComponent(ticker)+'&apikey='+tdKey);
+        var pd=await pr.json();
+        if(pd.close){currentPrice=parseFloat(pd.close);priceChange=parseFloat(pd.percent_change);}
+      }catch(e){}
+    }
+    var newsText='';
+    if(fhKey){
+      status.textContent='📰 Nieuws ophalen...';
+      try{
+        var from=new Date(Date.now()-3*24*60*60*1000).toISOString().split('T')[0];
+        var to=new Date().toISOString().split('T')[0];
+        var nr=await fetch('https://finnhub.io/api/v1/company-news?symbol='+ticker+'&from='+from+'&to='+to+'&token='+fhKey);
+        var nd=await nr.json();
+        if(Array.isArray(nd)&&nd.length){newsText=nd.slice(0,5).map(function(n){return'- '+n.headline;}).join('\n');}
+      }catch(e){}
+    }
+    if(!newsText)newsText='Geen recent nieuws voor '+ticker+'. Analyseer op basis van koersbeweging.';
+    status.textContent='🤖 AI analyseert...';
+    var priceCtx=currentPrice?'\n\nHuidige koers: $'+currentPrice.toFixed(2)+' ('+(priceChange>0?'+':'')+priceChange.toFixed(2)+'% vandaag)':'';
+    var history=ls_load('analyses_v1',[]);
+    var checked=history.filter(function(a){return a.verdict;});
+    var correct=checked.filter(function(a){return a.verdict==='correct';}).length;
+    var trackCtx=checked.length>0?'\nMijn track record: '+correct+'/'+checked.length+' correct ('+Math.round(correct/checked.length*100)+'%).':'';
+    var res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:'Je bent een ervaren news trader. Analyseer de situatie voor '+ticker+'.'+priceCtx+trackCtx+'\n\nRECENT NIEUWS:\n'+newsText+'\n\nBelangrijke vraag: is de koersbeweging al verwerkt in de prijs of moet die nog komen?\n\nGeef alleen dit JSON object:\n{"signaal":"BULLISH of BEARISH of NEUTRAAL of VLAK","kracht":"Sterk of Matig of Zwak","samenvatting":"1 zin wat er speelt","impact":"verwachte koersbeweging","al_verwerkt":"JA of NEE of DEELS","risico":"wat maakt analyse ongeldig","timing":"verwachte tijdshorizon"}'}]
+      })
+    });
+    if(!res.ok)throw new Error('API fout '+res.status);
+    var data=await res.json();
+    var raw=(data.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var r;try{r=JSON.parse(raw);}catch(e){throw new Error('Kon resultaat niet verwerken.');}
+    var sig=(r.signaal||'').toUpperCase();
+    sb.textContent=sig+(r.kracht?' — '+r.kracht:'');
+    sb.className='badge '+(sig==='BULLISH'?'bull':sig==='BEARISH'?'bear':sig==='VLAK'?'flat':'neut');
+    al.textContent=ticker+(currentPrice?' $'+currentPrice.toFixed(2):'');
+    var verwerktKleur=r.al_verwerkt==='JA'?'var(--red)':r.al_verwerkt==='NEE'?'var(--green)':'var(--amber)';
+    rt.innerHTML='<b>Samenvatting:</b> '+(r.samenvatting||'—')+'\n\n<b>Al verwerkt in koers:</b> <span style="color:'+verwerktKleur+';font-weight:500">'+(r.al_verwerkt||'—')+'</span> '+(r.al_verwerkt==='NEE'?'→ kans nog aanwezig!':r.al_verwerkt==='JA'?'→ te laat, boot al vertrokken':'→ gedeeltelijk verwerkt')+'\n\n<b>Verwachting:</b> '+(r.impact||'—')+'\n\n<b>Risico:</b> '+(r.risico||'—')+'\n\n<b>Timing:</b> '+(r.timing||'—');
+    rb.style.display='block'; status.style.display='none';
+    var analyses=ls_load('analyses_v1',[]);
+    analyses.unshift({id:Date.now(),asset:ticker,signaal:sig,kracht:r.kracht||'',samenvatting:r.samenvatting||'',impact:r.impact||'',timing:r.timing||'',nieuws:newsText.slice(0,300),date:new Date().toLocaleDateString('nl-NL'),time:new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),entryPrice:currentPrice,checkPrice:null,verdict:null,auto:false});
+    ls_save('analyses_v1',analyses);
+  }catch(e){
+    status.style.display='none'; eb.style.display='block';
+    eb.textContent='⚠ '+(e.message||'Onbekende fout');
+  }
+  btn.disabled=false; btn.textContent='⚡ Analyseer →';
+}
+
+function clearNews(){
+  document.getElementById('newsInput').value='';
+  document.getElementById('resultBox').style.display='none';
+  document.getElementById('errBox').style.display='none';
+  document.getElementById('newsInput').focus();
+}
+
+async function loadNieuws(){
+  var ticker=document.getElementById('nieuwsTicker').value.trim().toUpperCase();
+  var key=gs('fh_key');
+  var notice=document.getElementById('nieuwsNotice');
+  var list=document.getElementById('nieuwsList');
+  if(!key){notice.style.display='block';return;}
+  notice.style.display='none';
+  if(!ticker){list.innerHTML='<div class="empty">Voer een ticker in</div>';return;}
+  list.innerHTML='<div class="empty"><span class="dots"><span>&#x25CF;</span><span>&#x25CF;</span><span>&#x25CF;</span></span> Ophalen...</div>';
+  try{
+    var from=new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0];
+    var to=new Date().toISOString().split('T')[0];
+    var res=await fetch('https://finnhub.io/api/v1/company-news?symbol='+ticker+'&from='+from+'&to='+to+'&token='+key);
+    var data=await res.json();
+    if(data.error){list.innerHTML='<div class="err">&#x26A0; '+data.error+'</div>';return;}
+    if(!Array.isArray(data)||!data.length){await loadGeneralNieuws();return;}
+    list.innerHTML=data.slice(0,15).map(nieuwsKaart).join('');
+  }catch(e){list.innerHTML='<div class="err">&#x26A0; '+e.message+'</div>';}
+}
+
+async function loadGeneralNieuws(){
+  var key=gs('fh_key');
+  var list=document.getElementById('nieuwsList');
+  if(!key){document.getElementById('nieuwsNotice').style.display='block';return;}
+  list.innerHTML='<div class="empty"><span class="dots"><span>&#x25CF;</span><span>&#x25CF;</span><span>&#x25CF;</span></span> Marktnieuws...</div>';
+  try{
+    var res=await fetch('https://finnhub.io/api/v1/news?category=general&token='+key);
+    var data=await res.json();
+    if(!Array.isArray(data)||!data.length){list.innerHTML='<div class="empty">Geen nieuws gevonden</div>';return;}
+    list.innerHTML='<div class="info" style="margin-bottom:10px">&#x1F4F0; Algemeen marktnieuws</div>'+data.slice(0,15).map(nieuwsKaart).join('');
+  }catch(e){list.innerHTML='<div class="err">&#x26A0; '+e.message+'</div>';}
+}
+
+function openNieuws(url){window.open(url,'_blank');}
+function nieuwsKaart(n){
+  var date=new Date((n.datetime||Date.now()/1000)*1000);
+  var dateStr=date.getDate()+'/'+(date.getMonth()+1)+' '+date.getHours().toString().padStart(2,'0')+':'+date.getMinutes().toString().padStart(2,'0');
+  var title=(n.headline||n.title||'Geen titel').replace(/</g,'&lt;');
+  var summary=n.summary||n.description||'';
+  var url=n.url||'#';
+  var src=n.source||'';
+  var safeUrl=url.replace(/"/g,'&quot;');
+  var div=document.createElement('div');
+  div.className='nieuws-card';
+  div.setAttribute('data-url',url);
+  div.onclick=function(){window.open(this.getAttribute('data-url'),'_blank');};
+  div.innerHTML='<div style="display:flex;align-items:flex-start;gap:8px"><div class="nieuws-title" style="flex:1">'+title+'</div><div style="font-size:10px;color:var(--text3);font-family:var(--mono);flex-shrink:0">'+src+'</div></div>'+(summary?'<div class="nieuws-summary">'+summary.slice(0,160)+'...</div>':'')+'<div class="nieuws-meta">'+dateStr+'</div>';
+  return div.outerHTML.replace(' onclick="null"','');
+}
+
+function startBreakingCheck(){
+  var key=gs('fh_key'); if(!key){openSettings();return;}
+  if(breakingActive){
+    clearInterval(breakingInterval); breakingActive=false;
+    document.getElementById('breakingBtn').textContent='&#x1F534; Start breaking check';
+    return;
+  }
+  breakingActive=true;
+  document.getElementById('breakingBtn').textContent='&#x1F7E2; Stop breaking check';
+  checkBreakingNews();
+  breakingInterval=setInterval(checkBreakingNews,5*60*1000);
+}
+
+async function checkBreakingNews(){
+  var key=gs('fh_key'); if(!key) return;
+  try{
+    var res=await fetch('https://finnhub.io/api/v1/news?category=general&token='+key);
+    var data=await res.json();
+    if(!Array.isArray(data)||!data.length) return;
+    var latest=data[0];
+    if(!latest||latest.id===lastBreakingId) return;
+    lastBreakingId=latest.id;
+    var age=(Date.now()/1000)-latest.datetime;
+    if(age>1800) return;
+    document.getElementById('breakingText').textContent='&#x1F6A8; '+(latest.headline||latest.title||'Nieuw nieuws').slice(0,80);
+    document.getElementById('breakingBanner').classList.add('show');
+    playAlert();
+  }catch(e){}
+}
+
+function openBreaking(){switchTab('nieuws',null);loadGeneralNieuws();closeBanner();}
+function closeBanner(){document.getElementById('breakingBanner').classList.remove('show');}
+
+function playAlert(){
+  try{
+    var ctx=new(window.AudioContext||window.webkitAudioContext)();
+    [440,550,660].forEach(function(freq,i){
+      var osc=ctx.createOscillator(); var gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=freq; osc.type='sine';
+      gain.gain.setValueAtTime(0.3,ctx.currentTime+i*0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+i*0.15+0.4);
+      osc.start(ctx.currentTime+i*0.15); osc.stop(ctx.currentTime+i*0.15+0.4);
+    });
+  }catch(e){}
+}
+
+async function analyzeSentiment(){
+  var text=document.getElementById('sentInput').value.trim();
+  var asset=document.getElementById('sentAsset').value.trim()||'de markt';
+  if(!text){document.getElementById('sentInput').focus();return;}
+  var btn=document.getElementById('sentBtn');
+  var err=document.getElementById('sentErr');
+  var res=document.getElementById('sentResult');
+  btn.disabled=true; btn.textContent='Analyseren...';
+  err.style.display='none'; res.style.display='none';
+  try{
+    var prompt='Je bent een marktanalist. Analyseer sentiment voor '+asset+'.\n\nTEKSTEN:\n'+text.slice(0,4000)+'\n\nGeef ALLEEN dit JSON:\n{"bullish":30,"bearish":50,"neutraal":20,"totaal_signaal":"BULLISH of BEARISH of NEUTRAAL of GEMENGD","sterkte":"Sterk of Matig of Zwak","samenvatting":"2-3 zinnen","markt_implicatie":"Wat betekent dit","waarschuwing":"Wat kan sentiment omdraaien"}\n\nGetallen moeten optellen tot 100.';
+    var r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1200,messages:[{role:'user',content:prompt}]})
+    });
+    if(!r.ok) throw new Error('API fout '+r.status);
+    var data=await r.json();
+    var raw=(data.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var s; try{s=JSON.parse(raw);}catch(e2){throw new Error('Kon resultaat niet verwerken.');}
+    var sig=(s.totaal_signaal||'').toUpperCase();
+    var bc=sig==='BULLISH'?'bull':sig==='BEARISH'?'bear':sig==='GEMENGD'?'neut':'flat';
+    document.getElementById('sentBadge').textContent=sig+(s.sterkte?' — '+s.sterkte:'');
+    document.getElementById('sentBadge').className='badge '+bc;
+    document.getElementById('sentScores').innerHTML='<div class="track-item"><b class="cg">'+s.bullish+'%</b>Bullish</div><div class="track-item"><b class="cr">'+s.bearish+'%</b>Bearish</div><div class="track-item"><b class="ca">'+s.neutraal+'%</b>Neutraal</div>';
+    document.getElementById('sentMeter').innerHTML='<div class="sent-bar-wrap"><div class="sent-labels"><span style="color:var(--green)">&#x25B2; '+s.bullish+'%</span><span style="color:var(--text3)">Neutraal '+s.neutraal+'%</span><span style="color:var(--red)">'+s.bearish+'% &#x25BC;</span></div><div class="sent-bar-track"><div class="sent-bar-fill-bull" style="width:'+s.bullish+'%"></div><div class="sent-bar-fill-bear" style="width:'+s.bearish+'%"></div></div></div>';
+    document.getElementById('sentBody').innerHTML='<b>Samenvatting:</b> '+(s.samenvatting||'—')+'\n\n<b>Markt implicatie:</b> '+(s.markt_implicatie||'—')+'\n\n<b>Waarschuwing:</b> '+(s.waarschuwing||'—');
+    res.style.display='block';
+  }catch(e){err.style.display='block'; err.textContent='&#x26A0; '+(e.message||'Onbekende fout');}
+  btn.disabled=false; btn.textContent='Analyseer sentiment &#x2192;';
+}
+
+function renderFearGreed(){
+  var prices=Object.values(priceData).filter(function(d){return d.pct!==undefined;});
+  var score=50;
+  if(prices.length){var avg=prices.reduce(function(s,d){return s+d.pct;},0)/prices.length;score=Math.min(100,Math.max(0,Math.round(50+avg*5)));}
+  var label=score<=20?'Extreme Fear':score<=40?'Fear':score<=60?'Neutraal':score<=80?'Greed':'Extreme Greed';
+  var color=score<=20?'var(--red)':score<=40?'#ff8c42':score<=60?'var(--amber)':score<=80?'var(--green)':'#00ff88';
+  document.getElementById('fgMeter').innerHTML='<div class="fg-gauge"><div class="fg-number" style="color:'+color+'">'+score+'</div><div class="fg-label" style="color:'+color+'">'+label+'</div><div class="fg-bar-track"><div class="fg-seg" style="flex:20;background:var(--red)"></div><div class="fg-seg" style="flex:20;background:#ff8c42"></div><div class="fg-seg" style="flex:20;background:var(--amber)"></div><div class="fg-seg" style="flex:20;background:var(--green)"></div><div class="fg-seg" style="flex:20;background:#00ff88"></div></div><div style="max-width:400px;margin:0 auto;position:relative;height:20px"><div style="position:absolute;left:'+score+'%;transform:translateX(-50%);top:0;width:3px;height:18px;background:var(--text);border-radius:2px"></div></div><div class="fg-legend-row"><span>Extreme Fear</span><span>Fear</span><span>Neutraal</span><span>Greed</span><span>Extreme Greed</span></div></div>';
+  var desc=score<=30?'<b style="color:var(--red)">Extreme Fear</b> — markt is erg angstig. Slecht nieuws raakt extra hard.':score<=45?'<b style="color:#ff8c42">Fear</b> — beleggers zijn voorzichtig. Negatief nieuws heeft meer impact.':score<=55?'<b style="color:var(--amber)">Neutraal</b> — markt in balans. Normaal sentiment.':score<=70?'<b style="color:var(--green)">Greed</b> — optimistisch. Let op: slecht nieuws kan harder aankomen.':'<b style="color:#00ff88">Extreme Greed</b> — iedereen is hebzuchtig. Markt kwetsbaar voor correctie.';
+  var src=prices.length?'Score gebaseerd op '+prices.length+' assets in watchlist':'Ververs koersen voor nauwkeurigere score';
+  document.getElementById('fgLegend').innerHTML='<div class="card"><div class="label" style="margin-bottom:8px">Wat betekent dit?</div><div style="font-size:13px;line-height:1.7;color:var(--text2)">'+desc+'</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:8px">'+src+'</div></div>';
+}
+
+function renderCorrelaties(){
+  var corrs=[
+    {cat:'&#x1F6E2;&#xFE0F; Olie & Energie',items:[{t:'Olie stijgt',e:'Shell, BP, ExxonMobil stijgen',d:'bull'},{t:'Olie stijgt',e:'Luchtvaart (KLM, Ryanair) daalt',d:'bear'},{t:'Hormuz spanningen',e:'Olie spike + defensie aandelen omhoog',d:'bull'},{t:'OPEC verhoogt productie',e:'Olie daalt, energiebedrijven dalen',d:'bear'}]},
+    {cat:'&#x1F4C8; Rente & Fed',items:[{t:'Fed verhoogt rente',e:'Tech daalt (AAPL, NVDA, TSLA)',d:'bear'},{t:'Fed verhoogt rente',e:'Banken (JPMorgan, Goldman) stijgen',d:'bull'},{t:'Fed verlaagt rente',e:'Goud stijgt, USD daalt',d:'bull'},{t:'Rente onveranderd',e:'Markt opgelucht — licht bullish',d:'bull'}]},
+    {cat:'&#x1F4B5; Dollar (USD)',items:[{t:'USD sterker',e:'Goud daalt, grondstoffen dalen',d:'bear'},{t:'USD sterker',e:'Multinationals lijden op kwartaalcijfers',d:'bear'},{t:'USD zwakker',e:'EUR/USD stijgt, emerging markets omhoog',d:'bull'}]},
+    {cat:'&#x1F30D; Geopolitiek',items:[{t:'Oorlog / conflict uitbreekt',e:'Goud stijgt, olie stijgt',d:'bull'},{t:'Oorlog / conflict uitbreekt',e:'Aandelenmarkt daalt, euro daalt',d:'bear'},{t:'Handelsakkoord gesloten',e:'Aandelen stijgen, grondstoffen normaliseren',d:'bull'}]},
+    {cat:'&#x1F4CA; Macro',items:[{t:'Hoge inflatie (CPI)',e:'Tech daalt, goud stijgt, USD omhoog',d:'bear'},{t:'Sterke NFP (banengroei)',e:'USD stijgt, aandelen gemengd',d:'neut'},{t:'Recessie angst',e:'Defensieve aandelen (farma, voeding) stijgen',d:'bull'}]},
+    {cat:'&#x1F916; Tech & AI',items:[{t:'Nvidia kwartaalcijfers sterk',e:'AI sector stijgt (MSFT, GOOGL, AMD)',d:'bull'},{t:'Chip export restricties VS',e:'NVDA daalt, Aziatische chips dalen',d:'bear'},{t:'AI regelgeving nieuws',e:'Tech onzekerheid, gemengd',d:'neut'}]}
+  ];
+  var html='';
+  corrs.forEach(function(cat){
+    html+='<div class="corr-section"><div class="corr-title">'+cat.cat+'</div>';
+    cat.items.forEach(function(i){
+      var dc=i.d==='bull'?'var(--green)':i.d==='bear'?'var(--red)':'var(--amber)';
+      var dl=i.d==='bull'?'&#x25B2; STIJGT':i.d==='bear'?'&#x25BC; DAALT':'&#x2194; GEMENGD';
+      html+='<div class="corr-row"><div class="corr-trigger">'+i.t+'</div><div style="color:var(--text3);flex-shrink:0">&#x2192;</div><div class="corr-effect">'+i.e+'</div><span class="corr-dir" style="background:'+dc+'22;color:'+dc+'">'+dl+'</span></div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('correlatiesGrid').innerHTML=html;
+}
+
+function calcPosition(){
+  var portfolio=parseFloat(document.getElementById('psPortfolio').value);
+  var risk=parseFloat(document.getElementById('psRisk').value);
+  var entry=parseFloat(document.getElementById('psEntry').value);
+  var stop=parseFloat(document.getElementById('psStop').value);
+  var targetVal=parseFloat(document.getElementById('psTarget').value)||null;
+  var minRR=parseInt(document.getElementById('psRR').value)||3;
+  var el=document.getElementById('psResult');
+  if(!portfolio||!risk||!entry||!stop){el.style.display='none';return;}
+  var maxLoss=portfolio*(risk/100);
+  var stopDist=Math.abs(entry-stop);
+  if(stopDist===0){el.style.display='none';return;}
+  var shares=Math.floor(maxLoss/stopDist);
+  var totalVal=shares*entry;
+  var rr=targetVal?Math.abs(targetVal-entry)/stopDist:null;
+  var rrOk=rr?rr>=minRR:null;
+  el.style.display='block';
+  document.getElementById('psMaxLoss').textContent='\u20AC'+maxLoss.toFixed(2);
+  document.getElementById('psShares').textContent=shares+' aandelen';
+  document.getElementById('psTotal').textContent='\u20AC'+totalVal.toFixed(2);
+  document.getElementById('psStopDist').textContent='\u20AC'+stopDist.toFixed(2)+' ('+((stopDist/entry)*100).toFixed(1)+'%)';
+  if(rr){document.getElementById('psRRResult').innerHTML='<span style="color:'+(rrOk?'var(--green)':'var(--red)')+'">1:'+rr.toFixed(1)+' '+(rrOk?'&#x2713; Goed':'&#x2717; Te laag (min 1:'+minRR+')')+'</span>';}
+  else{document.getElementById('psRRResult').innerHTML='<span style="color:var(--text3)">Vul doelprijs in</span>';}
+  var advice, advColor;
+  if(shares===0){advice='&#x2717; Stop-loss te dicht bij instap';advColor='var(--red)';}
+  else if(totalVal>portfolio*0.2){advice='&#x26A0; Positie is >20% van portfolio';advColor='var(--amber)';}
+  else{advice='&#x2713; Positie past binnen risicobeheer';advColor='var(--green)';}
+  document.getElementById('psAdvice').innerHTML='<span style="color:'+advColor+'">'+advice+'</span>';
+}
+
+function addTicker(){
+  var inp=document.getElementById('tickerInput');
+  var t=inp.value.trim().toUpperCase();
+  if(!t||watchlist.indexOf(t)!==-1){inp.value='';return;}
+  watchlist.push(t); lsSave('watchlist_v1',watchlist);
+  inp.value=''; renderWatchlistGrid(); fetchPrice(t);
+}
+function removeTicker(t){
+  watchlist=watchlist.filter(function(x){return x!==t;});
+  delete priceData[t]; lsSave('watchlist_v1',watchlist); renderWatchlistGrid();
+}
+function renderWatchlistGrid(){
+  var g=document.getElementById('watchlistGrid');
+  if(!watchlist.length){g.innerHTML='<div class="empty">Voeg tickers toe</div>';return;}
+  g.innerHTML='';
+  watchlist.forEach(function(t){
+    var d=priceData[t];
+    var ph='<div class="tc-price ld">···</div>',ch='';
+    if(d&&d.price){
+      var cls=d.change>0?'up':d.change<0?'dn':'nu';
+      var arr=d.change>0?'▲':d.change<0?'▼':'—';
+      ph='<div class="tc-price '+cls+'">'+parseFloat(d.price).toFixed(2)+'</div>';
+      ch='<div class="tc-chg '+cls+'">'+arr+' '+(d.change>0?'+':'')+parseFloat(d.change).toFixed(2)+' ('+parseFloat(d.pct).toFixed(2)+'%)</div>';
+    }else if(d&&d.err){ph='<div class="tc-price" style="font-size:11px;color:var(--text3)">'+d.err+'</div>';}
+    var div=document.createElement('div');
+    div.className='tc';
+    div.innerHTML='<button class="tc-del">&#x2715;</button><div class="tc-name">'+t+'</div>'+ph+ch+'<div class="tc-time">'+(d&&d.time?d.time:'—')+'</div>';
+    div.querySelector('.tc-del').onclick=(function(ticker){return function(){removeTicker(ticker);};})(t);
+    g.appendChild(div);
+  });
+}
+async function fetchPrice(ticker){
+  var key=gs('td_key');
+  if(!key){priceData[ticker]={err:'Geen API key'};renderWatchlistGrid();return;}
+  try{
+    var res=await fetch('https://api.twelvedata.com/quote?symbol='+encodeURIComponent(ticker)+'&apikey='+key);
+    var d=await res.json();
+    if(d.status==='error'||!d.close){priceData[ticker]={err:d.message||'Niet gevonden'};}
+    else{
+      var now=new Date();
+      priceData[ticker]={price:d.close,change:parseFloat(d.change),pct:parseFloat(d.percent_change),time:now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')};
+    }
+  }catch(e){priceData[ticker]={err:'Verbindingsfout'};}
+  renderWatchlistGrid();
+}
+async function refreshAll(){
+  var key=gs('td_key');
+  if(!key){openSettings();return;}
+  document.getElementById('lastRefresh').textContent='Laden...';
+  var promises=watchlist.map(function(t){return fetchPrice(t);});
+  await Promise.all(promises);
+  var now=new Date();
+  document.getElementById('lastRefresh').textContent='Ververst om '+now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  renderFearGreed();
+}
+
+function addAlarm(){
+  var ticker=document.getElementById('alarmTicker').value.trim().toUpperCase();
+  var pct=parseFloat(document.getElementById('alarmPct').value);
+  var dir=document.getElementById('alarmDir').value;
+  if(!ticker||!pct||pct<=0){alert('Vul ticker en percentage in.');return;}
+  var key=gs('td_key'); if(!key){openSettings();return;}
+  fetchBasePrice(ticker,pct,dir);
+  document.getElementById('alarmTicker').value='';
+  document.getElementById('alarmPct').value='';
+}
+async function fetchBasePrice(ticker,pct,dir){
+  var key=gs('td_key');
+  try{
+    var res=await fetch('https://api.twelvedata.com/price?symbol='+encodeURIComponent(ticker)+'&apikey='+key);
+    var d=await res.json();
+    if(!d.price){alert('Kon basiskoers niet ophalen');return;}
+    var now=new Date();
+    alarms.push({id:Date.now(),ticker:ticker,pct:pct,dir:dir,basePrice:parseFloat(d.price),fired:false,addedAt:now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0')});
+    lsSave('alarms_v1',alarms); renderAlarms(); startAlarmChecker();
+  }catch(e){alert('Fout: '+e.message);}
+}
+function removeAlarm(id){
+  alarms=alarms.filter(function(a){return a.id!==id;});
+  lsSave('alarms_v1',alarms); renderAlarms();
+}
+function renderAlarms(){
+  var el=document.getElementById('alarmList');if(!el)return;
+  if(!alarms.length){el.innerHTML='<div class="empty" style="padding:12px">Nog geen alarmen</div>';return;}
+  el.innerHTML='';
+  alarms.forEach(function(a){
+    var dirTxt=a.dir==='up'?'▲ stijgt':a.dir==='down'?'▼ daalt':'↕ beweegt';
+    var div=document.createElement('div');div.className='alarm-card';
+    div.innerHTML='<div class="'+(a.fired?'alarm-dot alarm-fired':'alarm-dot')+'"></div><div style="font-family:var(--mono);font-size:13px;font-weight:600;min-width:60px">'+a.ticker+'</div><div class="alarm-info">Als '+dirTxt+' ≥'+a.pct+'% | Basis: '+a.basePrice.toFixed(2)+' | '+a.addedAt+'</div>'+(a.fired?'<span class="badge bull" style="font-size:10px">AFGEGAAN</span>':'')+'<button class="dbtn"></button>';
+    div.querySelector('.dbtn').onclick=(function(id){return function(){removeAlarm(id);};})(a.id);
+    el.appendChild(div);
+  });
+}
+function startAlarmChecker(){if(alarmInterval)return;alarmInterval=setInterval(checkAlarms,60000);}
+async function checkAlarms(){
+  var key=gs('td_key'); if(!key||!alarms.length) return;
+  for(var i=0;i<alarms.length;i++){
+    var alarm=alarms[i]; if(alarm.fired) continue;
+    try{
+      var res=await fetch('https://api.twelvedata.com/price?symbol='+encodeURIComponent(alarm.ticker)+'&apikey='+key);
+      var d=await res.json(); if(!d.price) continue;
+      var current=parseFloat(d.price);
+      var changePct=((current-alarm.basePrice)/alarm.basePrice)*100;
+      var triggered=(alarm.dir==='up'&&changePct>=alarm.pct)||(alarm.dir==='down'&&changePct<=-alarm.pct)||(alarm.dir==='both'&&Math.abs(changePct)>=alarm.pct);
+      if(triggered){alarm.fired=true;lsSave('alarms_v1',alarms);playAlert();alert('ALARM: '+alarm.ticker+' '+(changePct>0?'&#x25B2;':'&#x25BC;')+' '+changePct.toFixed(2)+'%');}
+    }catch(e){}
+  }
+  renderAlarms();
+}
+
+function addTrade(){
+  var asset=document.getElementById('jAsset').value.trim();
+  var reason=document.getElementById('jReason').value.trim();
+  if(!asset||!reason){alert('Vul minimaal asset en redenering in.');return;}
+  var t={id:tid++,asset:asset.toUpperCase(),dir:document.getElementById('jDir').value,entry:document.getElementById('jEntry').value||'—',stop:document.getElementById('jStop').value||'—',reason:reason,date:new Date().toLocaleDateString('nl-NL'),outcome:'open'};
+  trades.unshift(t); lsSave('trades_v2',trades);
+  ['jAsset','jEntry','jStop','jReason'].forEach(function(id){document.getElementById(id).value='';});
+  renderTrades();
+}
+function setOutcome(id,o){
+  var t=trades.find(function(t){return t.id===id;});
+  if(t){t.outcome=o;lsSave('trades_v2',trades);renderTrades();}
+}
+function deleteTrade(id){
+  trades=trades.filter(function(t){return t.id!==id;});
+  lsSave('trades_v2',trades); renderTrades();
+}
+function renderTrades(){
+  var el=document.getElementById('tradesList');
+  if(!trades.length){el.innerHTML='<div class="empty">Nog geen trades</div>';return;}
+  el.innerHTML='';
+  trades.forEach(function(t){
+    var div=document.createElement('div');
+    div.className='trade-card';
+    var metaHtml=(t.entry!=='—'?'<span>Instap: <b>'+t.entry+'</b></span>':'')+(t.stop!=='—'?'<span>Stop: <b>'+t.stop+'</b></span>':'');
+    div.innerHTML='<div class="ttop"><div class="tasset">'+t.asset+'</div><div class="tdir '+(t.dir==='LONG'?'long':'short')+'">'+t.dir+'</div><div class="tdate">'+t.date+'</div></div><div class="treason">'+t.reason+'</div><div class="tmeta">'+metaHtml+'</div><div class="orow"><button class="obtn '+(t.outcome==='win'?'win':'')+'"> Win</button><button class="obtn '+(t.outcome==='loss'?'loss':'')+'"> Loss</button><button class="obtn '+(t.outcome==='open'?'open':'')+'">· Open</button><button class="dbtn"></button></div>';
+    div.querySelectorAll('.orow .obtn')[0].onclick=(function(id){return function(){setOutcome(id,'win');};})(t.id);
+    div.querySelectorAll('.orow .obtn')[1].onclick=(function(id){return function(){setOutcome(id,'loss');};})(t.id);
+    div.querySelectorAll('.orow .obtn')[2].onclick=(function(id){return function(){setOutcome(id,'open');};})(t.id);
+    div.querySelector('.dbtn').onclick=(function(id){return function(){deleteTrade(id);};})(t.id);
+    el.appendChild(div);
+  });
+}
+
+function renderHistory(){
+  var analyses=lsLoad('analyses_v1',[]);
+  var checked=analyses.filter(function(a){return a.verdict;});
+  var correct=checked.filter(function(a){return a.verdict==='correct';}).length;
+  var wr=checked.length?Math.round(correct/checked.length*100):0;
+  document.getElementById('trackBox').innerHTML='<div class="track-item"><b class="'+(wr>=50?'cg':'cr')+'">'+wr+'%</b>Nauwkeurigheid</div><div class="track-item"><b class="cb">'+analyses.length+'</b>Totaal</div><div class="track-item"><b class="cg">'+correct+'</b>Correct</div><div class="track-item"><b class="cr">'+(checked.length-correct)+'</b>Fout</div><div class="track-item"><b class="ca">'+analyses.filter(function(a){return !a.verdict;}).length+'</b>Openstaand</div>';
+  var cats={};
+  checked.forEach(function(a){if(!cats[a.signaal])cats[a.signaal]={c:0,t:0};cats[a.signaal].t++;if(a.verdict==='correct')cats[a.signaal].c++;});
+  var catEl=document.getElementById('catGrid');
+  if(catEl){
+    var entries=Object.entries(cats);
+    if(entries.length){
+      catEl.innerHTML=entries.map(function(e){var pct=Math.round(e[1].c/e[1].t*100);var bc=e[0]==='BULLISH'?'bull':e[0]==='BEARISH'?'bear':e[0]==='VLAK'?'flat':'neut';return '<div class="cat-card"><div class="label" style="margin-bottom:4px"><span class="badge '+bc+'" style="font-size:9px;padding:1px 6px">'+e[0]+'</span></div><div class="sval '+(pct>=50?'cg':'cr')+'">'+pct+'%</div><div style="font-size:10px;color:var(--text3);font-family:var(--mono);margin-top:2px">'+e[1].c+'/'+e[1].t+' correct</div></div>';}).join('');
+    }else{catEl.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px">Nog geen gecheckte analyses</div>';}
+  }
+  var el=document.getElementById('analysisList');
+  if(!analyses.length){el.innerHTML='<div class="empty">Nog geen analyses</div>';return;}
+  var html='';
+  analyses.forEach(function(a){
+    var bc=a.signaal==='BULLISH'?'bull':a.signaal==='BEARISH'?'bear':a.signaal==='VLAK'?'flat':'neut';
+    var verdictHtml=a.verdict?'<span class="alog-verdict '+(a.verdict==='correct'?'verdict-correct':'verdict-wrong')+'">'+(a.verdict==='correct'?'&#x2713; Correct':'&#x2717; Fout')+'</span>':'<span class="alog-verdict verdict-pending">&#x25CE; Openstaand</span>';
+    var checkBtn=!a.verdict&&gs('td_key')?'<button class="check-btn" onclick="checkAnalysis('+a.id+')" style="margin-left:8px">&#x21BB; Check</button>':'';
+    var pricesHtml='';
+    if(a.entryPrice){
+      pricesHtml='<div class="alog-prices"><div class="alog-price-item">Bij analyse: <b>'+parseFloat(a.entryPrice).toFixed(2)+'</b></div>';
+      if(a.checkPrice){pricesHtml+='<div class="alog-price-item">Bij check: <b>'+parseFloat(a.checkPrice).toFixed(2)+'</b></div><div class="alog-price-item">Beweging: <b class="'+(a.checkPrice>a.entryPrice?'cg':a.checkPrice<a.entryPrice?'cr':'')+'">'+((a.checkPrice-a.entryPrice)/a.entryPrice*100).toFixed(2)+'%</b></div>';}
+      pricesHtml+='</div>';
+    }
+    html+='<div class="alog-card"><div class="alog-top"><div class="alog-asset">'+a.asset+'</div><span class="badge '+bc+'" style="font-size:10px;padding:2px 8px">'+a.signaal+(a.kracht?' — '+a.kracht:'')+'</span><div class="alog-date">'+a.date+' '+a.time+'</div></div><div class="alog-body">'+a.samenvatting+'</div>'+pricesHtml+'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+verdictHtml+checkBtn+'<button class="btn-ghost" style="font-size:10px;padding:2px 6px;margin-left:auto" onclick="deleteAnalysis('+a.id+')">&#x2715;</button></div></div>';
+  });
+  el.innerHTML=html;
+}
+
+async function checkAnalysis(id){
+  var analyses=lsLoad('analyses_v1',[]);
+  var a=analyses.find(function(x){return x.id===id;});
+  if(!a) return;
+  var key=gs('td_key'); if(!key){openSettings();return;}
+  try{
+    var res=await fetch('https://api.twelvedata.com/price?symbol='+encodeURIComponent(a.asset)+'&apikey='+key);
+    var d=await res.json(); if(!d.price) throw new Error('Geen koers');
+    var checkPrice=parseFloat(d.price); a.checkPrice=checkPrice;
+    if(a.entryPrice){
+      var up=checkPrice>a.entryPrice*1.001, down=checkPrice<a.entryPrice*0.999;
+      if(a.signaal==='BULLISH')a.verdict=up?'correct':'wrong';
+      else if(a.signaal==='BEARISH')a.verdict=down?'correct':'wrong';
+      else a.verdict=(!up&&!down)?'correct':'wrong';
+    }
+    lsSave('analyses_v1',analyses); renderHistory();
+  }catch(e){alert('Kon koers niet ophalen: '+e.message);}
+}
+async function checkAllPending(){
+  var analyses=lsLoad('analyses_v1',[]);
+  var pending=analyses.filter(function(a){return !a.verdict&&a.entryPrice&&gs('td_key');});
+  if(!pending.length){alert('Geen openstaande analyses.');return;}
+  for(var i=0;i<pending.length;i++) await checkAnalysis(pending[i].id);
+}
+function deleteAnalysis(id){
+  lsSave('analyses_v1',lsLoad('analyses_v1',[]).filter(function(a){return a.id!==id;}));
+  renderHistory();
+}
+
+function renderStats(){
+  var w=trades.filter(function(t){return t.outcome==='win';}).length;
+  var l=trades.filter(function(t){return t.outcome==='loss';}).length;
+  var o=trades.filter(function(t){return t.outcome==='open';}).length;
+  var c=w+l, wr=c?Math.round(w/c*100):0;
+  var lo=trades.filter(function(t){return t.dir==='LONG';}).length;
+  var sh=trades.filter(function(t){return t.dir==='SHORT';}).length;
+  document.getElementById('statsGrid').innerHTML='<div class="scard"><div class="slabel">Win rate</div><div class="sval '+(wr>=50?'cg':'cr')+'">'+wr+'%</div></div><div class="scard"><div class="slabel">Totaal trades</div><div class="sval cb">'+trades.length+'</div></div><div class="scard"><div class="slabel">Wins</div><div class="sval cg">'+w+'</div></div><div class="scard"><div class="slabel">Losses</div><div class="sval cr">'+l+'</div></div>';
+  var mx=Math.max(w,l,o,lo,sh,1);
+  var bars=[['WIN',w,'var(--green)'],['LOSS',l,'var(--red)'],['OPEN',o,'var(--amber)'],['LONG',lo,'var(--blue)'],['SHORT',sh,'var(--text2)']];
+  document.getElementById('barChart').innerHTML=bars.map(function(b){return '<div class="brow"><div class="blabel" style="color:'+b[2]+'">'+b[0]+'</div><div class="btrack"><div class="bfill" style="width:'+Math.round(b[1]/mx*100)+'%;background:'+b[2]+'"></div></div><div class="bcount">'+b[1]+'</div></div>';}).join('');
+}
+
+function getAgendaEvents(){
+  var now=new Date(), y=now.getFullYear(), m=now.getMonth();
+  var events=[
+    {date:new Date(y,m,1),title:'ISM Manufacturing PMI',desc:'Inkoopmanagersindex VS industrie. Boven 50 = groei.',impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m,3),title:'US Banenrapport (NFP)',desc:'Maandelijks banenrapport. Een van de grootste marktbewegers.',impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m,10),title:'US Inflatie (CPI)',desc:'Prijsstijgingen VS. Hoog = Fed verhoogt rente = tech daalt.',impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m,12),title:'EU Inflatie (HICP)',desc:'Europese inflatie. Beinvloedt ECB en EUR/USD.',impact:'hoog',land:'&#x1F1EA;&#x1F1FA;'},
+    {date:new Date(y,m,15),title:'US Producentenprijzen (PPI)',desc:'Voorloper van CPI. Hoger dan verwacht = meer inflatie eraan.',impact:'midden',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m,17),title:'US Detailhandelsverkopen',desc:'Consumentenbestedingen VS. Sterk = goed voor economie.',impact:'midden',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m,20),title:'Fed Rentebeslissing (FOMC)',desc:'Grootste macro-event. Verhoging = aandelen dalen. Verlaging = stijgen.',impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m,22),title:'ECB Rentebeslissing',desc:'ECB stelt rente vast eurozone. Beweegt EUR/USD en Europese aandelen.',impact:'hoog',land:'&#x1F1EA;&#x1F1FA;'},
+    {date:new Date(y,m,24),title:'US BBP (GDP)',desc:'Economische groei VS. Negatief = recessieangst.',impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m,28),title:'PCE Prijsindex',desc:"Fed's favoriete inflatiemeter. Markt beweegt sterk op verrassingen.",impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m+1,1),title:'ISM Manufacturing PMI',desc:'Inkoopmanagersindex industrie VS.',impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+    {date:new Date(y,m+1,4),title:'US Banenrapport (NFP)',desc:'Maandelijks banenrapport VS.',impact:'hoog',land:'&#x1F1FA;&#x1F1F8;'},
+  ];
+  var today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  return events.filter(function(e){return e.date>=today;}).sort(function(a,b){return a.date-b.date;});
+}
+function loadAgenda(){agendaEvents=getAgendaEvents();renderAgenda();}
+function filterAgenda(f,btn){
+  agendaFilter=f;
+  document.querySelectorAll('.agenda-filter').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active'); renderAgenda();
+}
+function renderAgenda(){
+  var el=document.getElementById('agendaList'); if(!el) return;
+  var filtered=agendaFilter==='all'?agendaEvents:agendaEvents.filter(function(e){return e.impact===agendaFilter;});
+  if(!filtered.length){el.innerHTML='<div class="empty">Geen events voor dit filter</div>';return;}
+  var grouped={};
+  filtered.forEach(function(e){
+    var d=e.date;
+    var days=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+    var months=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+    var key=days[d.getDay()]+' '+d.getDate()+' '+months[d.getMonth()];
+    if(!grouped[key]) grouped[key]=[];
+    grouped[key].push(e);
+  });
+  var html='';
+  Object.entries(grouped).forEach(function(g){
+    html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid var(--border)">'+g[0]+'</div>';
+    g[1].forEach(function(e){
+      html+='<div class="agenda-event"><div class="agenda-dot dot-'+e.impact+'"></div><div style="flex:1"><div class="agenda-title">'+e.land+' '+e.title+'</div><div class="agenda-desc">'+e.desc+'</div></div><span class="agenda-impact impact-'+e.impact+'">'+e.impact+'</span></div>';
+    });
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function exportCSV(type){
+  var rows, filename;
+  if(type==='trades'){
+    rows=[['Asset','Richting','Instap','Stop-loss','Redenering','Datum','Resultaat']];
+    trades.forEach(function(t){rows.push([t.asset,t.dir,t.entry,t.stop,'"'+t.reason+'"',t.date,t.outcome]);});
+    filename='trades.csv';
+  }else{
+    rows=[['Asset','Signaal','Kracht','Samenvatting','Koers analyse','Koers check','Verschil%','Verdict','Datum']];
+    lsLoad('analyses_v1',[]).forEach(function(a){
+      var diff=a.entryPrice&&a.checkPrice?((a.checkPrice-a.entryPrice)/a.entryPrice*100).toFixed(2):'';
+      rows.push([a.asset,a.signaal,a.kracht,'"'+a.samenvatting+'"',a.entryPrice||'',a.checkPrice||'',diff,a.verdict||'open',a.date]);
+    });
+    filename='analyses.csv';
+  }
+  var csv=rows.map(function(r){return r.join(',');}).join('\n');
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// ─── Ticker Scan ─────────────────────────────────────────────
+async function runScan(){
+  var ticker = (document.getElementById('scanTicker').value||'').trim().toUpperCase();
+  if(!ticker) return;
+  var tdKey = gs('td_key');
+  var fhKey = gs('fh_key');
+  var el = document.getElementById('scanResult');
+  var btn = document.getElementById('scanBtn');
+  btn.disabled=true; btn.textContent='Scannen...';
+
+  el.innerHTML = '<div class="card"><div style="font-size:13px;color:var(--text2);line-height:2">'
+    +'<span id="scan_s1">· Nieuws ophalen...</span><br>'
+    +'<span id="scan_s2" style="color:var(--text3)">· Koers ophalen</span><br>'
+    +'<span id="scan_s3" style="color:var(--text3)">· AI analyse</span>'
+    +'</div></div>';
+
+  function setStep(n, txt, done){
+    var el2 = document.getElementById('scan_s'+n);
+    if(el2){ el2.textContent = (done?' ':'· ')+txt; el2.style.color = done?'var(--green)':'var(--amber)'; }
+  }
+
+  // Step 1: fetch news
+  var articles = [];
+  if(fhKey){
+    try{
+      var from = new Date(Date.now()-3*24*60*60*1000).toISOString().split('T')[0];
+      var to   = new Date().toISOString().split('T')[0];
+      var r1 = await fetch('https://finnhub.io/api/v1/company-news?symbol='+encodeURIComponent(ticker)+'&from='+from+'&to='+to+'&token='+fhKey);
+      var news = await r1.json();
+      if(Array.isArray(news)) articles = news.slice(0,8);
+    }catch(e){}
+  }
+  setStep(1, 'Nieuws opgehaald ('+(fhKey?articles.length+' artikelen':'geen Finnhub key')+')', true);
+
+  // Step 2: fetch price data
+  var quoteData = null;
+  var priceErr = '';
+  if(tdKey){
+    try{
+      var r2 = await fetch('https://api.twelvedata.com/quote?symbol='+encodeURIComponent(ticker)+'&apikey='+tdKey);
+      var q = await r2.json();
+      if(q && q.close && q.status!=='error'){
+        quoteData = {
+          price: parseFloat(q.close),
+          open: parseFloat(q.open),
+          high: parseFloat(q.high),
+          low: parseFloat(q.low),
+          change: parseFloat(q.change),
+          pct: parseFloat(q.percent_change),
+          volume: q.volume,
+          avg_volume: q.average_volume,
+          name: q.name || ticker
+        };
+      } else { priceErr = q.message||'Niet gevonden'; }
+    }catch(e){ priceErr = e.message; }
+  } else { priceErr = 'Geen Twelve Data key'; }
+  setStep(2, quoteData ? ('Koers: '+quoteData.price.toFixed(2)+' ('+( quoteData.pct>=0?'+':'')+quoteData.pct.toFixed(2)+'% vandaag)') : ('Koers fout: '+priceErr), true);
+
+  // Step 3: AI analysis
+  setStep(3, 'AI analyse bezig...', false);
+
+  var newsContext = articles.length > 0
+    ? articles.map(function(a,i){ return (i+1)+'. '+(a.headline||a.title||'')+(a.summary?' — '+a.summary.slice(0,200):''); }).join('\n')
+    : 'Geen recent nieuws gevonden voor '+ticker+'.';
+
+  var priceContext = quoteData
+    ? ('Huidige koers: '+quoteData.price.toFixed(2)+'\nOpen vandaag: '+quoteData.open.toFixed(2)+'\nDag high: '+quoteData.high.toFixed(2)+'\nDag low: '+quoteData.low.toFixed(2)+'\nVerandering vandaag: '+(quoteData.pct>=0?'+':'')+quoteData.pct.toFixed(2)+'%'+(quoteData.volume&&quoteData.avg_volume?'\nVolume: '+quoteData.volume+' (gemiddeld: '+quoteData.avg_volume+')':''))
+    : 'Geen koersdata beschikbaar.';
+
+  var prompt = 'Je bent een ervaren news trader. Analyseer het volgende voor aandeel/instrument: '+ticker+'\n\n'
+    +'RECENT NIEUWS (laatste 3 dagen):\n'+newsContext+'\n\n'
+    +'KOERSDATA:\n'+priceContext+'\n\n'
+    +'Beantwoord deze vragen en geef een concreet advies:\n'
+    +'1. Wat is het belangrijkste nieuws dat de koers kan bewegen?\n'
+    +'2. Heeft de koers al gereageerd op dit nieuws?\n'
+    +'3. Is er nog kans voor een trade, of is het nieuws al ingeprijsd?\n'
+    +'4. Richting advies: LONG, SHORT of WACHT\n'
+    +'5. Waarom wel of niet instappen?\n\n'
+    +'Geef ALLEEN dit JSON terug, geen andere tekst:\n'
+    +'{"signaal":"LONG of SHORT of WACHT","kracht":"Sterk of Matig of Zwak",'
+    +'"al_gereageerd":"uitleg of koers al bewogen is",'
+    +'"nieuws_samenvatting":"1-2 zinnen over het belangrijkste nieuws",'
+    +'"kans_inschatting":"Is er nog kans? Waarom wel/niet?",'
+    +'"entry_advies":"Wanneer en hoe instappen als er kans is",'
+    +'"risico":"Wat kan het plan ongeldig maken",'
+    +'"tijdshorizon":"Intraday / Dagen / Weken"}';
+
+  try{
+    var r3 = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({model:'claude-sonnet-4-20250514', max_tokens:1200,
+        messages:[{role:'user', content: prompt}]})
+    });
+    if(!r3.ok) throw new Error('API fout '+r3.status);
+    var d3 = await r3.json();
+    var raw = (d3.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var result = JSON.parse(raw);
+    setStep(3, 'AI analyse klaar', true);
+
+    var sig = (result.signaal||'WACHT').toUpperCase();
+    var sigClass = sig==='LONG'?'bull':sig==='SHORT'?'bear':'neut';
+    var sigColor = sig==='LONG'?'var(--green)':sig==='SHORT'?'var(--red)':'var(--amber)';
+    var pctAbs = quoteData ? Math.abs(quoteData.pct) : 0;
+    var reacted = pctAbs > 2 ? 'Sterk' : pctAbs > 0.8 ? 'Matig' : 'Weinig';
+    var reactedColor = pctAbs > 2 ? 'var(--red)' : pctAbs > 0.8 ? 'var(--amber)' : 'var(--green)';
+
+    el.innerHTML =
+      // Header
+      '<div class="result-box" style="margin-top:0">'
+        +'<div class="result-hdr" style="padding:14px">'
+          +'<div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text)">'+ticker+(quoteData?' — '+quoteData.price.toFixed(2):'')+'</div>'
+          +'<span class="badge '+sigClass+'" style="font-size:13px;padding:5px 14px">'+sig+(result.kracht?' — '+result.kracht:'')+'</span>'
+        +'</div>'
+      // Price reaction indicator
+      +(quoteData?
+        '<div style="display:flex;gap:0;border-bottom:1px solid var(--border)">'
+          +'<div style="flex:1;padding:12px 14px;border-right:1px solid var(--border)">'
+            +'<div class="label" style="margin-bottom:4px">Koers vandaag</div>'
+            +'<div style="font-family:var(--mono);font-size:20px;font-weight:600;color:'+(quoteData.pct>=0?'var(--green)':'var(--red)')+'">'+( quoteData.pct>=0?'+':'')+quoteData.pct.toFixed(2)+'%</div>'
+          +'</div>'
+          +'<div style="flex:1;padding:12px 14px;border-right:1px solid var(--border)">'
+            +'<div class="label" style="margin-bottom:4px">Koersreactie</div>'
+            +'<div style="font-family:var(--mono);font-size:16px;font-weight:600;color:'+reactedColor+'">'+reacted+'</div>'
+          +'</div>'
+          +'<div style="flex:1;padding:12px 14px">'
+            +'<div class="label" style="margin-bottom:4px">Nieuws items</div>'
+            +'<div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text)">'+articles.length+'</div>'
+          +'</div>'
+        +'</div>'
+      :'')
+      // Analysis body
+      +'<div class="result-body">'
+        +'<b>Nieuws samenvatting:</b><br>'+(result.nieuws_samenvatting||'—')+'<br><br>'
+        +'<b>Heeft koers al gereageerd?</b><br>'+(result.al_gereageerd||'—')+'<br><br>'
+        +'<b>Kans inschatting:</b><br>'+(result.kans_inschatting||'—')+'<br><br>'
+        +'<b style="color:'+sigColor+'">Entry advies ('+sig+'):</b><br>'+(result.entry_advies||'—')+'<br><br>'
+        +'<b>Risico:</b><br>'+(result.risico||'—')+'<br><br>'
+        +'<b>Tijdshorizon:</b> '+(result.tijdshorizon||'—')
+      +'</div>'
+    +'</div>';
+
+    // Save to analyses
+    if(quoteData){
+      var analyses = lsLoad('analyses_v1',[]);
+      analyses.unshift({id:Date.now(),asset:ticker,signaal:sig==='LONG'?'BULLISH':sig==='SHORT'?'BEARISH':'NEUTRAAL',kracht:result.kracht||'',
+        samenvatting:(result.nieuws_samenvatting||'').slice(0,200),impact:result.entry_advies||'',timing:result.tijdshorizon||'',
+        nieuws:newsContext.slice(0,300),date:new Date().toLocaleDateString('nl-NL'),
+        time:new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),
+        entryPrice:quoteData.price,checkPrice:null,verdict:null});
+      lsSave('analyses_v1',analyses);
+    }
+  } catch(e){
+    setStep(3, 'Fout: '+e.message, false);
+    el.innerHTML += '<div class="err" style="margin-top:10px"> '+e.message+'</div>';
+  }
+  btn.disabled=false; btn.textContent='Scan →';
+}
+
+
+// ─── LEER SYSTEEM ─────────────────────────────────────────────
+
+function renderLearn(){
+  var analyses = lsLoad('analyses_v1', []);
+  var checked  = analyses.filter(function(a){ return a.verdict; });
+  var correct  = checked.filter(function(a){ return a.verdict==='correct'; });
+  var wrong    = checked.filter(function(a){ return a.verdict==='wrong'; });
+
+  renderPatternGrid(checked, correct, wrong);
+  renderHeatmaps(checked);
+  renderMistakes(wrong, analyses);
+  renderInsights(checked, correct, wrong);
+  renderLearnedRulesPanel();
+  // Load cached AI lessons if available
+  var cached = lsLoad('ai_lessons_cache', null);
+  var aiEl = document.getElementById('aiLessons');
+  if(cached && cached.lessons && cached.lessons.length && aiEl && aiEl.innerHTML.indexOf('Klik')>=0){
+    aiEl.innerHTML = cached.lessons.map(function(l,i){
+      return '<div class="ai-lesson"><div class="ai-lesson-hdr"><div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--amber)">LES '+(i+1)+'</div><div style="font-size:13px;font-weight:500;color:var(--text)">'+l.titel+'</div></div><div class="ai-lesson-body"><b>Les:</b>\n'+l.les+'\n\n<b style="color:var(--green)">Actie:</b>\n'+l.actie+'</div></div>';
+    }).join('');
+  }
+}
+
+// ── Pattern Grid ─────────────────────────────────────────────
+function renderPatternGrid(checked, correct, wrong){
+  var el = document.getElementById('patternGrid');
+  if(!el) return;
+  var wr  = checked.length ? Math.round(correct.length/checked.length*100) : 0;
+
+  // Streak
+  var streak = 0, streakType = '';
+  var analyses = lsLoad('analyses_v1',[]).filter(function(a){return a.verdict;});
+  for(var i=0;i<analyses.length;i++){
+    if(i===0){ streak=1; streakType=analyses[0].verdict; }
+    else if(analyses[i].verdict===streakType) streak++;
+    else break;
+  }
+
+  // Best signal
+  var sigStats = {};
+  checked.forEach(function(a){
+    if(!sigStats[a.signaal]) sigStats[a.signaal]={c:0,t:0};
+    sigStats[a.signaal].t++;
+    if(a.verdict==='correct') sigStats[a.signaal].c++;
+  });
+  var bestSig = '—', bestPct = 0;
+  Object.entries(sigStats).forEach(function(e){
+    var pct = e[1].t>=2 ? Math.round(e[1].c/e[1].t*100) : 0;
+    if(pct>bestPct){ bestPct=pct; bestSig=e[0]; }
+  });
+
+  // Best day
+  var dayStats = {};
+  var dayNames = ['','Ma','Di','Wo','Do','Vr','Za','Zo'];
+  checked.forEach(function(a){
+    var day = getDayFromDate(a.date);
+    if(day < 1) return;
+    if(!dayStats[day]) dayStats[day]={c:0,t:0};
+    dayStats[day].t++;
+    if(a.verdict==='correct') dayStats[day].c++;
+  });
+  var bestDay = '—', bestDayPct = 0;
+  Object.entries(dayStats).forEach(function(e){
+    var pct = e[1].t>=2 ? Math.round(e[1].c/e[1].t*100) : 0;
+    if(pct>bestDayPct){ bestDayPct=pct; bestDay=dayNames[parseInt(e[0])]; }
+  });
+
+  // Worst signal
+  var worstSig = '—', worstPct = 100;
+  Object.entries(sigStats).forEach(function(e){
+    var pct = e[1].t>=2 ? Math.round(e[1].c/e[1].t*100) : 100;
+    if(pct<worstPct){ worstPct=pct; worstSig=e[0]; }
+  });
+
+  el.innerHTML = [
+    {label:'Win rate', val:wr+'%', sub:checked.length+' gecheckt', color: wr>=60?'var(--green)':wr>=40?'var(--amber)':'var(--red)'},
+    {label:'Fouten', val:wrong.length, sub:'van '+checked.length, color:'var(--red)'},
+    {label:'Huidige streak', val:(streak||'—')+(streakType==='correct'?'':streakType==='wrong'?'':''), sub:streakType==='correct'?'op rij correct':streakType==='wrong'?'op rij fout':'', color:streakType==='correct'?'var(--green)':streakType==='wrong'?'var(--red)':'var(--text)'},
+    {label:'Beste signaal', val:bestSig, sub:bestPct+'% correct', color:'var(--green)'},
+    {label:'Slechtste signaal', val:worstSig, sub:worstPct+'% correct', color:'var(--red)'},
+    {label:'Beste dag', val:bestDay, sub:bestDayPct+'% correct', color:'var(--blue)'},
+  ].map(function(p){
+    return '<div class="pattern-card"><div class="pattern-label">'+p.label+'</div><div class="pattern-val" style="color:'+p.color+'">'+p.val+'</div><div class="pattern-sub">'+p.sub+'</div></div>';
+  }).join('');
+}
+
+// ── Heatmaps ─────────────────────────────────────────────────
+function renderHeatmaps(checked){
+  renderHeatmap('heatmapSignaal', buildStats(checked, function(a){return a.signaal;}));
+  renderHeatmap('heatmapKracht',  buildStats(checked, function(a){return a.kracht||'Onbekend';}));
+
+  var dayNames = {1:'Maandag',2:'Dinsdag',3:'Woensdag',4:'Donderdag',5:'Vrijdag'};
+  var dayData  = {};
+  checked.forEach(function(a){
+    var d = getDayFromDate(a.date);
+    if(d>=1&&d<=5){
+      var n = dayNames[d];
+      if(!dayData[n]) dayData[n]={c:0,t:0};
+      dayData[n].t++;
+      if(a.verdict==='correct') dayData[n].c++;
+    }
+  });
+  renderHeatmap('heatmapDag', dayData);
+}
+
+function buildStats(items, keyFn){
+  var out = {};
+  items.forEach(function(a){
+    var k = keyFn(a)||'?';
+    if(!out[k]) out[k]={c:0,t:0};
+    out[k].t++;
+    if(a.verdict==='correct') out[k].c++;
+  });
+  return out;
+}
+
+function renderHeatmap(id, stats){
+  var el = document.getElementById(id);
+  if(!el) return;
+  var entries = Object.entries(stats).sort(function(a,b){ return b[1].t-a[1].t; });
+  if(!entries.length){ el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:4px">Nog geen data</div>'; return; }
+  el.innerHTML = entries.map(function(e){
+    var pct = Math.round(e[1].c/e[1].t*100);
+    var color = pct>=60?'var(--green)':pct>=40?'var(--amber)':'var(--red)';
+    return '<div class="heatmap-row">'
+      +'<div class="heatmap-label">'+e[0]+'</div>'
+      +'<div class="heatmap-track"><div class="heatmap-fill" style="width:'+pct+'%;background:'+color+'"></div></div>'
+      +'<div class="heatmap-pct" style="color:'+color+'">'+pct+'%</div>'
+      +'<div class="heatmap-n">n='+e[1].t+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── Mistake analysis ──────────────────────────────────────────
+function renderMistakes(wrong, allAnalyses){
+  var el = document.getElementById('mistakeList');
+  if(!el) return;
+  if(!wrong.length){ el.innerHTML='<div class="empty" style="padding:16px">Nog geen foute analyses gecheckt — of je hebt alles goed! </div>'; return; }
+
+  el.innerHTML = wrong.slice(0,10).map(function(a){
+    var bc = a.signaal==='BULLISH'?'bull':a.signaal==='BEARISH'?'bear':'neut';
+    var priceDiff = (a.entryPrice&&a.checkPrice) ? ((a.checkPrice-a.entryPrice)/a.entryPrice*100).toFixed(2) : null;
+    var why = analyzeWhyWrong(a);
+    return '<div class="mistake-card">'
+      +'<div class="mistake-top">'
+        +'<div style="font-family:var(--mono);font-size:13px;font-weight:700">'+a.asset+'</div>'
+        +'<span class="badge '+bc+'" style="font-size:10px">'+a.signaal+(a.kracht?' — '+a.kracht:'')+'</span>'
+        +(priceDiff?'<span style="font-family:var(--mono);font-size:12px;color:'+(parseFloat(priceDiff)>=0?'var(--green)':'var(--red)')+'">'+( parseFloat(priceDiff)>=0?'+':'')+priceDiff+'%</span>':'')
+        +'<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-left:auto">'+a.date+'</div>'
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:8px">'+a.samenvatting+'</div>'
+      +'<div class="mistake-why"><b style="color:var(--red)">Waarom fout?</b><br>'+why.why+'</div>'
+      +'<div class="mistake-lesson"><b>Les:</b> '+why.lesson+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function analyzeWhyWrong(a){
+  var reasons = [], lessons = [];
+  var priceDiff = (a.entryPrice&&a.checkPrice) ? (a.checkPrice-a.entryPrice)/a.entryPrice*100 : null;
+
+  // Was prediction correct direction but weak?
+  if(a.signaal==='BULLISH' && priceDiff!==null && priceDiff>0 && priceDiff<0.5){
+    reasons.push('De koers steeg wel maar te weinig (<0.5%) — het nieuws was al deels ingeprijsd');
+    lessons.push('Check altijd of het nieuws niet al eerder uitlekte (pre-market beweging)');
+  }
+  if(a.signaal==='BEARISH' && priceDiff!==null && priceDiff<0 && priceDiff>-0.5){
+    reasons.push('De koers daalde wel maar te weinig — nieuws al deels ingeprijsd');
+    lessons.push('Bij zwakke daling: wacht op bevestiging door volume spike');
+  }
+
+  // Complete opposite direction
+  if(a.signaal==='BULLISH' && priceDiff!==null && priceDiff<-1){
+    reasons.push('Koers ging precies de andere kant op ('+priceDiff.toFixed(2)+'%) — markt interpreteerde het nieuws anders');
+    lessons.push('Als de markt reageert tegengesteld aan jouw verwachting, accepteer het meteen en ga niet "wachten"');
+  }
+  if(a.signaal==='BEARISH' && priceDiff!==null && priceDiff>1){
+    reasons.push('Koers ging omhoog ondanks bearish signaal — mogelijk was er ander positief nieuws tegelijk');
+    lessons.push('Controleer altijd of er andere nieuwsstromen zijn die jouw analyse kunnen tegenwerken');
+  }
+
+  // Kracht mismatch
+  if(a.kracht==='Zwak'){
+    reasons.push('Signaalsterkte was "Zwak" — bij zwakke signalen is de kans op mislukking groter');
+    lessons.push('Handel alleen op Sterke of Matige signalen. Zwakke signalen overslaan');
+  }
+
+  // Day check
+  var day = getDayFromDate(a.date);
+  if(day===5){
+    reasons.push('Trade was op vrijdag — vrijdag is historisch minder betrouwbaar door lager volume');
+    lessons.push('Pa\'s regel: geen trades op vrijdag na 15:00. Overweeg vrijdag helemaal te skippen');
+  }
+
+  // Timing
+  if(a.timing && (a.timing.toLowerCase().includes('week') || a.timing.toLowerCase().includes('maand'))){
+    reasons.push('Tijdshorizon was lang ('+a.timing+') maar check was waarschijnlijk te snel na de analyse');
+    lessons.push('Check lange-termijn analyses pas na de verwachte tijdshorizon, niet meteen');
+  }
+
+  if(!reasons.length){
+    reasons.push('Geen duidelijk patroon gevonden — de markt is onvoorspelbaar, dit hoort erbij');
+    lessons.push('Elke trader heeft verliezende analyses. Zorg dat je risicobeheer klopt zodat een fout je nooit te veel kost');
+  }
+
+  return {
+    why: reasons.join('. '),
+    lesson: lessons.join('. ')
+  };
+}
+
+// ── Auto Insights ─────────────────────────────────────────────
+function renderInsights(checked, correct, wrong){
+  var el = document.getElementById('insightsList');
+  if(!el) return;
+  if(checked.length < 3){ el.innerHTML='<div class="insight-card tip"><div class="insight-icon"></div><div class="insight-body"><div class="insight-title">Nog te weinig data</div><div class="insight-desc">Doe minimaal 5 gecheckte analyses om inzichten te zien. Ga meer analyses doen en check de resultaten!</div></div></div>'; return; }
+
+  var insights = [];
+  var wr = Math.round(correct.length/checked.length*100);
+
+  // Win rate insight
+  if(wr >= 65){
+    insights.push({type:'good', icon:'▲', title:'Sterke win rate: '+wr+'%', desc:'Boven de 65% — je analyses zijn betrouwbaar. Overweeg je positiegrootte voorzichtig te verhogen als je track record blijft groeien.', meta:correct.length+' correct van '+checked.length});
+  } else if(wr < 40){
+    insights.push({type:'warn', icon:'!', title:'Win rate onder 40%: '+wr+'%', desc:'Meer analyses zijn fout dan goed. Ga terug naar basics: paper trading, en analyseer welke signaaltypen het slechtste scoren voor jou.', meta:wrong.length+' fout van '+checked.length});
+  }
+
+  // Signaal patroon
+  var sigStats = buildStats(checked, function(a){return a.signaal;});
+  Object.entries(sigStats).forEach(function(e){
+    var pct = Math.round(e[1].c/e[1].t*100);
+    if(e[1].t>=3 && pct>=70){
+      insights.push({type:'good', icon:'', title:e[0]+' signalen: jouw sterkste punt', desc:'Je '+e[0]+' analyses zijn '+pct+'% correct ('+e[1].c+'/'+e[1].t+'). Focus meer op dit signaaltype.', meta:'n='+e[1].t});
+    }
+    if(e[1].t>=3 && pct<=35){
+      insights.push({type:'warn', icon:'', title:e[0]+' signalen vermijden!', desc:'Slechts '+pct+'% correct op '+e[0]+' ('+e[1].c+'/'+e[1].t+'). Dit signaaltype werkt niet voor jou. Skip het totdat je begrijpt waarom.', meta:'n='+e[1].t});
+    }
+  });
+
+  // Kracht patroon
+  var krachtStats = buildStats(checked, function(a){return a.kracht||'Onbekend';});
+  if(krachtStats['Zwak'] && krachtStats['Zwak'].t>=2){
+    var zwakPct = Math.round(krachtStats['Zwak'].c/krachtStats['Zwak'].t*100);
+    if(zwakPct < 45){
+      insights.push({type:'warn', icon:'', title:'Zwakke signalen kosten je geld', desc:'Analyses met kracht "Zwak" zijn slechts '+zwakPct+'% correct. Stop met traden op zwakke signalen — wacht op Sterk of Matig.', meta:'n='+krachtStats['Zwak'].t});
+    }
+  }
+
+  // Friday pattern
+  var dayStats = buildStats(checked, function(a){ var d=getDayFromDate(a.date); return d===5?'Vrijdag':d===1?'Maandag':d===2?'Dinsdag':d===3?'Woensdag':d===4?'Donderdag':'Overig'; });
+  if(dayStats['Vrijdag'] && dayStats['Vrijdag'].t>=2){
+    var vrPct = Math.round(dayStats['Vrijdag'].c/dayStats['Vrijdag'].t*100);
+    if(vrPct<45){
+      insights.push({type:'warn', icon:'', title:'Vrijdag is jouw slechtste dag', desc:'Op vrijdag ben je '+vrPct+'% correct. Bevestigt Pa\'s regel: skip vrijdag.', meta:'n='+dayStats['Vrijdag'].t});
+    }
+  }
+
+  // Streak check
+  var lastFive = checked.slice(0,5);
+  var lastFiveWrong = lastFive.filter(function(a){return a.verdict==='wrong';}).length;
+  if(lastFiveWrong>=3){
+    insights.push({type:'warn', icon:'!', title:'Slechte run: '+lastFiveWrong+'/5 recent fout', desc:'Je laatste 5 analyses waren voor '+lastFiveWrong+' deel fout. Dit is een signaal om even te pauzeren, terug te kijken naar je methode, en niet door te gaan vanuit frustratie.', meta:'Laatste 5 analyses'});
+  }
+
+  // Asset concentration
+  var assetCount = {};
+  checked.forEach(function(a){ assetCount[a.asset]=(assetCount[a.asset]||0)+1; });
+  var topAsset = Object.entries(assetCount).sort(function(a,b){return b[1]-a[1];})[0];
+  if(topAsset && topAsset[1]>=5 && checked.length>=8){
+    var assetCorrect = checked.filter(function(a){return a.asset===topAsset[0]&&a.verdict==='correct';}).length;
+    var assetPct = Math.round(assetCorrect/topAsset[1]*100);
+    insights.push({type:'tip', icon:'→', title:topAsset[0]+' is jouw meest geanalyseerde asset', desc:'Je deed '+topAsset[1]+' analyses op '+topAsset[0]+' met '+assetPct+'% correct. '+(assetPct>=60?'Dit is je thuismarkt — je kent dit instrument goed.':'Overweeg of je '+topAsset[0]+' echt goed genoeg begrijpt.'), meta:'n='+topAsset[1]});
+  }
+
+  if(!insights.length){
+    insights.push({type:'tip', icon:'↑', title:'Blijf data verzamelen', desc:'Je hebt '+checked.length+' gecheckte analyses. Zodra je meer patronen hebt zal het systeem sterker wordende inzichten geven.', meta:''});
+  }
+
+  el.innerHTML = insights.map(function(i){
+    return '<div class="insight-card '+i.type+'">'
+      +'<div class="insight-icon">'+i.icon+'</div>'
+      +'<div class="insight-body">'
+        +'<div class="insight-title">'+i.title+'</div>'
+        +'<div class="insight-desc">'+i.desc+'</div>'
+        +(i.meta?'<div class="insight-meta">'+i.meta+'</div>':'')
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ── AI Lessons ────────────────────────────────────────────────
+async function generateLessons(){
+  var analyses = lsLoad('analyses_v1',[]);
+  var checked  = analyses.filter(function(a){ return a.verdict; });
+  if(checked.length < 3){ alert('Doe eerst minimaal 3 gecheckte analyses.'); return; }
+
+  var el  = document.getElementById('aiLessons');
+  var btn = document.getElementById('genLessonsBtn');
+  btn.disabled=true; btn.textContent='Lessen genereren...';
+  el.innerHTML='<div class="empty" style="padding:16px"><span class="dots"><span>●</span><span>●</span><span>●</span></span> AI analyseert jouw fouten...</div>';
+
+  var correct = checked.filter(function(a){return a.verdict==='correct';});
+  var wrong   = checked.filter(function(a){return a.verdict==='wrong';});
+  var wr = Math.round(correct.length/checked.length*100);
+
+  // Build analysis summary
+  var sigStats = buildStats(checked, function(a){return a.signaal;});
+  var sigSummary = Object.entries(sigStats).map(function(e){
+    return e[0]+': '+Math.round(e[1].c/e[1].t*100)+'% correct ('+e[1].t+'x gedaan)';
+  }).join(', ');
+
+  var wrongSummary = wrong.slice(0,5).map(function(a,i){
+    var diff = (a.entryPrice&&a.checkPrice)?((a.checkPrice-a.entryPrice)/a.entryPrice*100).toFixed(2):null;
+    return (i+1)+'. '+a.asset+' — '+a.signaal+(a.kracht?' ('+a.kracht+')':'')+' op '+a.date+(diff?' | koers ging '+(parseFloat(diff)>=0?'+':'')+diff+'%':'')+'. Samenvatting: '+a.samenvatting;
+  }).join('\n');
+
+  var correctSummary = correct.slice(0,5).map(function(a,i){
+    return (i+1)+'. '+a.asset+' — '+a.signaal+(a.kracht?' ('+a.kracht+')':'')+' op '+a.date;
+  }).join('\n');
+
+  var prompt = 'Je bent een trading coach. Analyseer de trading analyses van deze lerende trader en geef persoonlijke, eerlijke lessen.\n\n'
+    +'STATISTIEKEN:\n'
+    +'- Win rate: '+wr+'% ('+correct.length+' correct, '+wrong.length+' fout, '+checked.length+' totaal gecheckt)\n'
+    +'- Per signaaltype: '+sigSummary+'\n\n'
+    +'FOUTE ANALYSES:\n'+wrongSummary+'\n\n'
+    +'CORRECTE ANALYSES:\n'+correctSummary+'\n\n'
+    +'Geef 3-5 concrete, persoonlijke lessen specifiek voor deze trader. Wees eerlijk en direct.\n'
+    +'Format: JSON array met objecten: [{"titel":"korte titel","les":"2-3 zinnen concrete les","actie":"1 concrete actie die de trader morgen al kan doen"}]\n'
+    +'Geen andere tekst, alleen de JSON array.';
+
+  try{
+    var r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,
+        messages:[{role:'user',content:prompt}]})
+    });
+    if(!r.ok) throw new Error('API fout '+r.status);
+    var data = await r.json();
+    var raw = (data.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var lessons = JSON.parse(raw);
+    el.innerHTML = lessons.map(function(l,i){
+      return '<div class="ai-lesson">'
+        +'<div class="ai-lesson-hdr">'
+          +'<div style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--amber)">LES '+(i+1)+'</div>'
+          +'<div style="font-size:13px;font-weight:500;color:var(--text)">'+l.titel+'</div>'
+        +'</div>'
+        +'<div class="ai-lesson-body">'
+          +'<b>Les:</b>\n'+l.les+'\n\n'
+          +'<b style="color:var(--green)">Actie voor morgen:</b>\n'+l.actie
+        +'</div>'
+        +'</div>';
+    }).join('');
+    // Cache lessons
+    lsSave('ai_lessons_cache', {date: new Date().toLocaleDateString('nl-NL'), lessons: lessons});
+  }catch(e){
+    el.innerHTML='<div class="err"> '+e.message+'</div>';
+  }
+  btn.disabled=false; btn.textContent='Genereer AI lessen van mijn fouten';
+}
+
+// ── Helper: parse date to day of week ────────────────────────
+function getDayFromDate(dateStr){
+  // dateStr like "18-3-2026" or "18/3/2026"
+  try{
+    var parts = dateStr.replace(/\//g,'-').split('-');
+    if(parts.length===3){
+      // nl format: day-month-year
+      var d = new Date(parseInt(parts[2]), parseInt(parts[1])-1, parseInt(parts[0]));
+      return d.getDay(); // 0=sun,1=mon,...
+    }
+  }catch(e){}
+  return -1;
+}
+
+// ── Hook into switchTabMenu ───────────────────────────────────
+var _origSwitchTabMenu = switchTabMenu;
+switchTabMenu = function(n){
+  _origSwitchTabMenu(n);
+  if(n==='learn') renderLearn();
+};
+
+
+// ─── AUTO PILOT ───────────────────────────────────────────────
+
+var apRunning      = false;
+var apTimer        = null;
+var apCheckTimer   = null;
+var apNextRunTime  = null;
+var apCountdownTimer = null;
+var focusTickers   = [];
+
+function initAutoPilot(){
+  focusTickers = lsLoad('focus_tickers', ['NVDA', 'USOIL', 'AAPL']);
+  renderFocusPills();
+  updateApProgress();
+  // Restore running state if page was refreshed
+  if(lsLoad('ap_running', false)){
+    startAutoPilot();
+  }
+}
+
+// ── Focus tickers ─────────────────────────────────────────────
+async function addFocusTicker(){
+  var inp = document.getElementById('focusInput');
+  var t = (inp.value||'').trim().toUpperCase();
+  if(!t){ return; }
+  if(focusTickers.includes(t)){ inp.value=''; return; }
+  if(focusTickers.length >= 8){ alert('Max 8 focus tickers.'); return; }
+  var key = gs('td_key');
+  if(key){
+    // Validate ticker exists
+    inp.disabled = true;
+    try{
+      var r = await fetch('https://api.twelvedata.com/price?symbol='+encodeURIComponent(t)+'&apikey='+key);
+      var d = await r.json();
+      if(!d.price || d.status === 'error'){
+        apLog('error', t+' — onbekende ticker, niet toegevoegd');
+        inp.disabled = false;
+        inp.value = '';
+        return;
+      }
+    } catch(e){ /* network error — add anyway */ }
+    inp.disabled = false;
+  }
+  focusTickers.push(t);
+  lsSave('focus_tickers', focusTickers);
+  inp.value = '';
+  renderFocusPills();
+  apLog('info', t+' toegevoegd aan focus tickers');
+}
+
+function removeFocusTicker(t){
+  focusTickers = focusTickers.filter(function(x){ return x!==t; });
+  lsSave('focus_tickers', focusTickers);
+  renderFocusPills();
+}
+
+function renderFocusPills(){
+  var el = document.getElementById('focusPills');
+  if(!el) return;
+  if(!focusTickers.length){
+    el.innerHTML = '<span style="font-size:12px;color:var(--text3)">Geen focus tickers — voeg er minimaal 1 toe</span>';
+    return;
+  }
+  el.innerHTML = '';
+  focusTickers.forEach(function(t){
+    var pill = document.createElement('div');
+    pill.className = 'focus-pill';
+    pill.innerHTML = t + '<button onclick="removeFocusTicker(\'' + t + '\')">x</button>';
+    el.appendChild(pill);
+  });
+}
+
+// ── Toggle ────────────────────────────────────────────────────
+function toggleAutoPilot(){
+  if(apRunning) stopAutoPilot();
+  else startAutoPilot();
+}
+
+function startAutoPilot(){
+  if(!gs('td_key') || !gs('fh_key')){
+    alert('Stel eerst je Twelve Data en Finnhub API keys in via het tandwiel-icoon.');
+    return;
+  }
+  if(!focusTickers.length){
+    alert('Voeg eerst minimaal 1 focus ticker toe.');
+    return;
+  }
+  apRunning = true;
+  lsSave('ap_running', true);
+  updateApUI();
+  apLog('info', 'Auto Pilot gestart — ' + focusTickers.join(', '));
+  runApCycle(); // run immediately
+  scheduleNextRun();
+}
+
+function stopAutoPilot(){
+  apRunning = false;
+  lsSave('ap_running', false);
+  if(apTimer){ clearTimeout(apTimer); apTimer=null; }
+  if(apCountdownTimer){ clearInterval(apCountdownTimer); apCountdownTimer=null; }
+  apNextRunTime = null;
+  updateApUI();
+  apLog('info', 'Auto Pilot gestopt');
+}
+
+function scheduleNextRun(){
+  if(!apRunning) return;
+  var savedSettings = lsLoad('ap_settings', {interval:30}); var mins = savedSettings.interval || 30;
+  var ms = mins * 60 * 1000;
+  apNextRunTime = Date.now() + ms;
+  if(apTimer){ clearTimeout(apTimer); }
+  apTimer = setTimeout(function(){
+    runApCycle();
+    scheduleNextRun();
+  }, ms);
+  startCountdown();
+}
+
+function startCountdown(){
+  if(apCountdownTimer) clearInterval(apCountdownTimer);
+  apCountdownTimer = setInterval(function(){
+    var el = document.getElementById('apNextRun');
+    if(!el || !apNextRunTime){ return; }
+    var rem = Math.max(0, apNextRunTime - Date.now());
+    var m = Math.floor(rem/60000);
+    var s = Math.floor((rem%60000)/1000);
+    el.textContent = m + ':' + (s<10?'0':'')+s;
+    if(rem<=0) el.textContent = 'Nu bezig...';
+  }, 1000);
+}
+
+function updateApUI(){
+  var dot   = document.getElementById('apDot');
+  var label = document.getElementById('apLabel');
+  var meta  = document.getElementById('apMeta');
+  var btn   = document.getElementById('apToggle');
+  if(!dot) return;
+  if(apRunning){
+    dot.className   = 'ap-dot running';
+    label.textContent = 'Actief — ' + focusTickers.join(', ');
+    meta.textContent  = 'Analyseert elke ' + (document.getElementById('apInterval').value||30) + ' minuten';
+    btn.className   = 'ap-toggle stop';
+    btn.textContent = 'Stop';
+  } else {
+    dot.className   = 'ap-dot stopped';
+    label.textContent = 'Gestopt';
+    meta.textContent  = 'Configureer tickers en start';
+    btn.className   = 'ap-toggle start';
+    btn.textContent = 'Start';
+    var nextEl = document.getElementById('apNextRun');
+    if(nextEl) nextEl.textContent = '—';
+  }
+}
+
+// ── Main cycle ────────────────────────────────────────────────
+async function runApCycle(){
+  if(!apRunning) return;
+
+  // Read all settings upfront — DOM elements may not be accessible in async context
+  var apSettings = {
+    marketOnly:  (document.getElementById('apMarketOnly')  ? document.getElementById('apMarketOnly').value  : '1') === '1',
+    interval:    parseInt(document.getElementById('apInterval')    ? document.getElementById('apInterval').value    : '30') || 30,
+    checkDelay:  parseInt(document.getElementById('apCheckDelay')  ? document.getElementById('apCheckDelay').value  : '240') || 240,
+    newsAge:     parseInt(document.getElementById('apNewsAge')     ? document.getElementById('apNewsAge').value     : '6') || 6
+  };
+  lsSave('ap_settings', apSettings);
+
+  // Market hours check (NL time = UTC+1/+2, US market = 15:30-22:00 NL)
+  var marketOnly = apSettings.marketOnly;
+  if(marketOnly){
+    var now = new Date();
+    var utcH = now.getUTCHours();
+    var utcM = now.getUTCMinutes();
+    var utcMins = utcH*60+utcM;
+    // US market: 14:30-21:00 UTC (winter) / 13:30-20:00 UTC (summer)
+    // Simple check: 13:30-21:00 UTC covers both
+    if(utcMins < 13*60+30 || utcMins > 21*60){
+      apLog('info', 'Markt gesloten — cycle overgeslagen (markturen: 15:30-22:00 NL)');
+      return;
+    }
+  }
+
+  apLog('info', 'Cycle gestart voor: ' + focusTickers.join(', '));
+
+  // Process each ticker sequentially to respect rate limits
+  for(var i=0; i<focusTickers.length; i++){
+    if(!apRunning) break;
+    await apAnalyzeTicker(focusTickers[i]);
+    // Small delay between tickers to avoid rate limit
+    if(i < focusTickers.length-1) await sleep(3000);
+  }
+
+  // Schedule auto-checks for analyses that need checking
+  scheduleAutoChecks();
+  updateApProgress();
+  apLog('info', 'Cycle klaar — volgende over ' + (lsLoad('ap_settings',{interval:30}).interval||30) + ' minuten');
+}
+
+async function apAnalyzeTicker(ticker){
+  var fhKey = gs('fh_key');
+  var tdKey = gs('td_key');
+  if(!fhKey || !tdKey) return;
+
+  apLog('loading', ticker + ' — nieuws ophalen...');
+
+  try{
+    // 1. Fetch recent news
+    var savedSettings = lsLoad('ap_settings', {newsAge:6,checkDelay:240});
+    var maxAgeHours = savedSettings.newsAge || 6;
+    var cutoffTs = Date.now()/1000 - maxAgeHours*3600;
+    // Always fetch last 2 days from Finnhub, then filter by actual article timestamp
+    var from = new Date(Date.now() - 2*24*60*60*1000).toISOString().split('T')[0];
+    var to   = new Date().toISOString().split('T')[0];
+    var r1 = await fetch('https://finnhub.io/api/v1/company-news?symbol='+encodeURIComponent(ticker)+'&from='+from+'&to='+to+'&token='+fhKey);
+    var newsData = await r1.json();
+
+    if(!Array.isArray(newsData) || !newsData.length){
+      apLog('skip', ticker + ' — geen nieuws gevonden');
+      return;
+    }
+
+    // Filter by actual article timestamp — skip articles older than maxAgeHours
+    var freshNews = newsData.filter(function(a){
+      return a.datetime && a.datetime >= cutoffTs;
+    });
+
+    if(!freshNews.length){
+      var oldestAge = Math.round((Date.now()/1000 - newsData[0].datetime)/3600*10)/10;
+      apLog('skip', ticker + ' — geen nieuws jonger dan '+maxAgeHours+'u (recentste: '+oldestAge+'u geleden)');
+      return;
+    }
+
+    // Hash check — skip if we already analyzed the top fresh article
+    var analyzed = lsLoad('ap_analyzed_hashes', []);
+    var topHeadline = freshNews[0].headline || freshNews[0].title || '';
+    var newsHash = ticker + '_' + simpleHash(topHeadline);
+    if(analyzed.includes(newsHash)){
+      apLog('skip', ticker + ' — recent nieuws al eerder geanalyseerd');
+      return;
+    }
+
+    var articles = freshNews.slice(0, 5);
+    var newsContext = articles.map(function(a, i){
+      var ageMin = Math.round((Date.now()/1000 - a.datetime)/60);
+      var ageStr = ageMin < 60 ? ageMin+'min geleden' : Math.round(ageMin/60*10)/10+'u geleden';
+      return (i+1)+'. ['+ageStr+'] '+(a.headline||a.title||'')+(a.summary?' — '+a.summary.slice(0,150):'');
+    }).join('\n');
+
+    // 2. Fetch current price
+    await sleep(500);
+    var r2 = await fetch('https://api.twelvedata.com/quote?symbol='+encodeURIComponent(ticker)+'&apikey='+tdKey);
+    var quote = await r2.json();
+    if(!quote || !quote.close || quote.status==='error'){
+      apLog('error', ticker + ' — koers niet gevonden');
+      return;
+    }
+    var entryPrice = parseFloat(quote.close);
+    var pct = parseFloat(quote.percent_change);
+
+    var priceCtx = 'Huidige koers: '+entryPrice.toFixed(2)
+      +'\nOpen: '+parseFloat(quote.open).toFixed(2)
+      +'\nDag verandering: '+(pct>=0?'+':'')+pct.toFixed(2)+'%'
+      +(quote.volume && quote.average_volume ? '\nVolume: '+quote.volume+' (gem: '+quote.average_volume+')' : '');
+
+    apLog('loading', ticker + ' — AI analyseert...');
+
+    // 3. AI analysis
+    await sleep(500);
+    var r3 = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 800,
+        messages: [{role:'user', content:
+          'Je bent een ervaren news trader. Analyseer snel en bondig.\n\n'
+          +'TICKER: '+ticker+'\n\n'
+          +'NIEUWS (laatste '+maxAgeHours+'u, gefilterd op tijdstip):\n'+newsContext+'\n\n'
+          +'KOERSDATA:\n'+priceCtx+'\n\n'
+          +getLearnedRulesContext(ticker)+'\n\n'
+          +'Heeft de koers al gereageerd op dit nieuws? Is er nog een kans?\n\n'
+          +'Geef ALLEEN dit JSON, geen andere tekst:\n'
+          +'{"signaal":"BULLISH of BEARISH of NEUTRAAL","kracht":"Sterk of Matig of Zwak",'
+          +'"samenvatting":"max 1 zin",'
+          +'"al_gereageerd":"Ja/Deels/Nee — kort waarom",'
+          +'"kans":"Nog kans? Ja/Nee — kort waarom"}'
+        }]
+      })
+    });
+    if(!r3.ok) throw new Error('API fout '+r3.status);
+    var d3 = await r3.json();
+    var raw = (d3.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var result = JSON.parse(raw);
+    var sig = (result.signaal||'NEUTRAAL').toUpperCase();
+
+    // 4. Save analysis
+    var analyses = lsLoad('analyses_v1', []);
+    var checkDelay = savedSettings.checkDelay || 240;
+    var newAnalysis = {
+      id: Date.now(),
+      asset: ticker,
+      signaal: sig==='BULLISH'?'BULLISH':sig==='BEARISH'?'BEARISH':'NEUTRAAL',
+      kracht: result.kracht||'',
+      samenvatting: result.samenvatting||'',
+      impact: result.al_gereageerd||'',
+      timing: 'Auto — '+checkDelay+'min check',
+      nieuws: newsContext.slice(0,300),
+      date: new Date().toLocaleDateString('nl-NL'),
+      time: new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}),
+      entryPrice: entryPrice,
+      checkPrice: null,
+      verdict: null,
+      autoGenerated: true,
+      checkAt: Date.now() + checkDelay*60*1000
+    };
+    analyses.unshift(newAnalysis);
+    lsSave('analyses_v1', analyses);
+
+    // Mark this news hash as analyzed
+    analyzed.push(newsHash);
+    if(analyzed.length > 500) analyzed = analyzed.slice(-400);
+    lsSave('ap_analyzed_hashes', analyzed);
+
+    var sigColor = sig==='BULLISH'?'var(--green)':sig==='BEARISH'?'var(--red)':'var(--amber)';
+    apLog('result', ticker+' — '+sig+(result.kracht?' ('+result.kracht+')':'')+' | '+result.samenvatting, sigColor);
+
+  } catch(e){
+    apLog('error', ticker + ' — fout: '+e.message);
+  }
+}
+
+// ── Auto-check pending analyses ───────────────────────────────
+function scheduleAutoChecks(){
+  var analyses = lsLoad('analyses_v1', []);
+  var now = Date.now();
+  var pending = analyses.filter(function(a){
+    return a.autoGenerated && !a.verdict && a.checkAt && a.checkAt <= now && a.entryPrice;
+  });
+  if(pending.length){
+    apLog('info', pending.length + ' analyses klaar voor auto-check...');
+    autoCheckPending(pending);
+  }
+}
+
+async function autoCheckPending(pending){
+  var tdKey = gs('td_key');
+  if(!tdKey) return;
+  var analyses = lsLoad('analyses_v1', []);
+  var checked = 0;
+  for(var i=0; i<pending.length; i++){
+    var a = pending[i];
+    try{
+      await sleep(1000);
+      var r = await fetch('https://api.twelvedata.com/price?symbol='+encodeURIComponent(a.asset)+'&apikey='+tdKey);
+      var d = await r.json();
+      if(!d.price) continue;
+      var checkPrice = parseFloat(d.price);
+      var diffPct = (checkPrice - a.entryPrice) / a.entryPrice * 100;
+      // Find in main array and update
+      var idx = analyses.findIndex(function(x){ return x.id===a.id; });
+      if(idx>=0){
+        analyses[idx].checkPrice = checkPrice;
+        var up   = diffPct > 0.3;
+        var down = diffPct < -0.3;
+        if(analyses[idx].signaal==='BULLISH')      analyses[idx].verdict = up?'correct':'wrong';
+        else if(analyses[idx].signaal==='BEARISH') analyses[idx].verdict = down?'correct':'wrong';
+        else analyses[idx].verdict = (!up&&!down)?'correct':'wrong';
+        checked++;
+        var v = analyses[idx].verdict;
+        apLog('result', a.asset+' auto-check: '+(diffPct>=0?'+':'')+diffPct.toFixed(2)+'% → '+(v==='correct'?'correct':'fout'), v==='correct'?'var(--green)':'var(--red)');
+      }
+    } catch(e){}
+  }
+  if(checked > 0){
+    lsSave('analyses_v1', analyses);
+    updateApProgress();
+    apLog('info', checked+' analyses automatisch gecheckt en opgeslagen');
+    await selfLearnFromResults(checked);
+  }
+}
+
+// ── Progress ─────────────────────────────────────────────────
+function updateApProgress(){
+  var analyses = lsLoad('analyses_v1',[]);
+  var autoAll  = analyses.filter(function(a){return a.autoGenerated;});
+  var today    = new Date().toLocaleDateString('nl-NL');
+  var todayAuto= autoAll.filter(function(a){return a.date===today;});
+  var checked  = autoAll.filter(function(a){return a.verdict;});
+  var correct  = checked.filter(function(a){return a.verdict==='correct';});
+  var wr       = checked.length ? Math.round(correct.length/checked.length*100) : null;
+  var el1 = document.getElementById('apCountToday');
+  var el2 = document.getElementById('apCountTotal');
+  var el3 = document.getElementById('apCountChecked');
+  var el4 = document.getElementById('apWinRate');
+  if(el1) el1.textContent = todayAuto.length;
+  if(el2) el2.textContent = autoAll.length;
+  if(el3) el3.textContent = checked.length;
+  if(el4){
+    el4.textContent = wr!==null ? wr+'%' : '—';
+    el4.style.color = wr===null?'var(--text)':wr>=55?'var(--green)':wr>=45?'var(--amber)':'var(--red)';
+  }
+  // Save session snapshot for crash recovery
+  saveSessionSnapshot();
+  renderSessionSummary();
+}
+
+function saveSessionSnapshot(){
+  var analyses = lsLoad('analyses_v1',[]);
+  var autoAll  = analyses.filter(function(a){return a.autoGenerated;});
+  var today    = new Date().toLocaleDateString('nl-NL');
+  var checked  = autoAll.filter(function(a){return a.verdict;});
+  var correct  = checked.filter(function(a){return a.verdict==='correct';});
+
+  // Build per-ticker summary
+  var tickers = {};
+  autoAll.forEach(function(a){
+    if(!tickers[a.asset]) tickers[a.asset]={total:0,checked:0,correct:0};
+    tickers[a.asset].total++;
+    if(a.verdict){ tickers[a.asset].checked++; if(a.verdict==='correct') tickers[a.asset].correct++; }
+  });
+
+  var snapshot = {
+    savedAt: new Date().toISOString(),
+    today: today,
+    totalAutoAnalyses: autoAll.length,
+    totalChecked: checked.length,
+    totalCorrect: correct.length,
+    winRate: checked.length ? Math.round(correct.length/checked.length*100) : null,
+    pendingChecks: autoAll.filter(function(a){return !a.verdict && a.checkAt && a.checkAt > Date.now();}).length,
+    tickers: tickers,
+    focusTickers: focusTickers,
+    apRunning: apRunning
+  };
+
+  // Save daily sessions
+  var sessions = lsLoad('session_history', []);
+  var todaySession = sessions.find(function(s){ return s.date===today; });
+  if(todaySession){
+    Object.assign(todaySession, {updatedAt: snapshot.savedAt, totalAutoAnalyses: snapshot.totalAutoAnalyses, totalChecked: snapshot.totalChecked, winRate: snapshot.winRate, tickers: tickers});
+  } else {
+    sessions.unshift({date: today, startedAt: snapshot.savedAt, updatedAt: snapshot.savedAt, totalAutoAnalyses: snapshot.totalAutoAnalyses, totalChecked: snapshot.totalChecked, winRate: snapshot.winRate, tickers: tickers});
+    if(sessions.length > 30) sessions = sessions.slice(0,30);
+  }
+  lsSave('session_history', sessions);
+  lsSave('last_snapshot', snapshot);
+}
+
+function renderSessionSummary(){
+  var el = document.getElementById('sessionSummary');
+  if(!el) return;
+
+  var snapshot   = lsLoad('last_snapshot', null);
+  var sessions   = lsLoad('session_history', []);
+  var analyses   = lsLoad('analyses_v1', []);
+  var autoAll    = analyses.filter(function(a){return a.autoGenerated;});
+  var today      = new Date().toLocaleDateString('nl-NL');
+  var todayAutos = autoAll.filter(function(a){return a.date===today;});
+  var todayChecked = todayAutos.filter(function(a){return a.verdict;});
+  var todayCorrect = todayChecked.filter(function(a){return a.verdict==='correct';});
+  var todayWR    = todayChecked.length ? Math.round(todayCorrect.length/todayChecked.length*100) : null;
+  var pending    = autoAll.filter(function(a){return !a.verdict && a.checkAt;});
+  var overdue    = pending.filter(function(a){return a.checkAt <= Date.now();});
+
+  // Build today block
+  var html = '<div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px">'
+    +'<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">Vandaag — '+today+'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">'
+      +statChip('Analyses', todayAutos.length, 'var(--text)')
+      +statChip('Gecheckt', todayChecked.length, 'var(--text)')
+      +statChip('Win rate', todayWR!==null?todayWR+'%':'—', todayWR===null?'var(--text)':todayWR>=55?'var(--green)':todayWR>=45?'var(--amber)':'var(--red)')
+    +'</div>';
+
+  // Pending checks
+  if(overdue.length){
+    html += '<div style="background:var(--amber-dim);border:1px solid var(--amber);border-radius:6px;padding:7px 10px;font-size:11px;color:var(--amber);font-family:var(--mono)">'+overdue.length+' checks wachten — wordt opgepakt bij volgende run</div>';
+  } else if(pending.length){
+    var nextCheck = Math.min.apply(null, pending.map(function(a){return a.checkAt;}));
+    var minLeft   = Math.max(0, Math.round((nextCheck - Date.now())/60000));
+    html += '<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">Volgende auto-check over ~'+minLeft+' min ('+pending.length+' in wachtrij)</div>';
+  }
+  html += '</div>';
+
+  // Per-ticker breakdown today
+  var tickerMap = {};
+  todayAutos.forEach(function(a){
+    if(!tickerMap[a.asset]) tickerMap[a.asset]={total:0,checked:0,correct:0};
+    tickerMap[a.asset].total++;
+    if(a.verdict){ tickerMap[a.asset].checked++; if(a.verdict==='correct') tickerMap[a.asset].correct++; }
+  });
+  var tickerEntries = Object.entries(tickerMap);
+  if(tickerEntries.length){
+    html += '<div style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:10px">';
+    html += '<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em">Per ticker vandaag</div>';
+    tickerEntries.forEach(function(e){
+      var t=e[0], d=e[1];
+      var wr = d.checked ? Math.round(d.correct/d.checked*100) : null;
+      var col = wr===null?'var(--text)':wr>=55?'var(--green)':wr>=45?'var(--amber)':'var(--red)';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">'
+        +'<span style="font-family:var(--mono);font-weight:600;color:var(--text);min-width:55px">'+t+'</span>'
+        +'<span style="color:var(--text3)">'+d.total+' analyses</span>'
+        +'<span style="color:var(--text3)">'+d.checked+' gecheckt</span>'
+        +(wr!==null?'<span style="font-family:var(--mono);font-weight:600;color:'+col+';margin-left:auto">'+wr+'%</span>':'<span style="margin-left:auto;color:var(--text3);font-size:10px">wacht op check</span>')
+        +'</div>';
+    });
+    html += '</div>';
+  }
+
+  // Previous sessions
+  var prevSessions = sessions.filter(function(s){ return s.date!==today; }).slice(0,5);
+  if(prevSessions.length){
+    html += '<div><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">Vorige sessies</div>';
+    prevSessions.forEach(function(s){
+      var col = s.winRate===null?'var(--text)':s.winRate>=55?'var(--green)':s.winRate>=45?'var(--amber)':'var(--red)';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px">'
+        +'<span style="font-family:var(--mono);color:var(--text3);min-width:85px">'+s.date+'</span>'
+        +'<span style="color:var(--text3)">'+s.totalAutoAnalyses+' analyses</span>'
+        +'<span style="color:var(--text3)">'+s.totalChecked+' gecheckt</span>'
+        +(s.winRate!==null?'<span style="font-family:var(--mono);font-weight:600;color:'+col+';margin-left:auto">'+s.winRate+'%</span>':'<span style="margin-left:auto;color:var(--text3);font-size:10px">—</span>')
+        +'</div>';
+    });
+    html += '</div>';
+  } else {
+    html += '<div style="font-size:11px;color:var(--text3)">Nog geen eerdere sessies</div>';
+  }
+
+  // Crash recovery notice
+  if(snapshot && !apRunning && lsLoad('ap_running', false)){
+    html = '<div style="background:var(--amber-dim);border:1px solid var(--amber);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--amber);margin-bottom:10px;font-family:var(--mono)">'
+      +'Auto Pilot was actief — pagina herladen of crash gedetecteerd. Data is veilig. Druk Start om te hervatten.'
+      +'</div>' + html;
+  }
+
+  el.innerHTML = html;
+}
+
+function statChip(label, val, color){
+  return '<div style="background:var(--bg3);border-radius:7px;padding:8px 10px;text-align:center">'
+    +'<div style="font-size:18px;font-weight:600;font-family:var(--mono);color:'+color+'">'+val+'</div>'
+    +'<div style="font-size:10px;color:var(--text3);margin-top:2px">'+label+'</div>'
+    +'</div>';
+}
+
+// ── Log ───────────────────────────────────────────────────────
+var apLogs = [];
+function apLog(type, msg, color){
+  var time = new Date().toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  apLogs.unshift({type:type, msg:msg, time:time, color:color||''});
+  if(apLogs.length > 50) apLogs.pop();
+  renderApLog();
+}
+
+function renderApLog(){
+  var el = document.getElementById('apLog');
+  if(!el) return;
+  if(!apLogs.length){
+    el.innerHTML = '<div style="padding:14px;font-size:12px;color:var(--text3);text-align:center">Nog geen activiteit</div>';
+    return;
+  }
+  el.innerHTML = apLogs.slice(0,20).map(function(l){
+    var icon = l.type==='error'?'!':l.type==='skip'?'—':l.type==='result'?'→':l.type==='loading'?'·':'·';
+    var col  = l.color || (l.type==='error'?'var(--red)':l.type==='skip'?'var(--text3)':'var(--text2)');
+    return '<div class="ap-entry">'
+      +'<div class="ap-entry-time">'+l.time+'</div>'
+      +'<div class="ap-entry-body" style="color:'+col+'"><span style="font-family:var(--mono);margin-right:6px">'+icon+'</span>'+l.msg+'</div>'
+      +'</div>';
+  }).join('');
+}
+
+function clearApLog(){
+  apLogs = [];
+  renderApLog();
+}
+
+// ── Utils ─────────────────────────────────────────────────────
+function sleep(ms){ return new Promise(function(r){setTimeout(r,ms);}); }
+
+function simpleHash(str){
+  var h = 0;
+  for(var i=0;i<Math.min(str.length,50);i++){
+    h = ((h<<5)-h)+str.charCodeAt(i);
+    h = h&h;
+  }
+  return Math.abs(h).toString(36);
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// ZELFLEREND SYSTEEM
+// ═══════════════════════════════════════════════════════════════
+
+// ── Learned rules store ───────────────────────────────────────
+// Structure: { global: [...rules], perAsset: { NVDA: [...rules] } }
+// Each rule: { type, description, confidence, basedOn }
+
+function getLearnedRules(){
+  return lsLoad('learned_rules_v1', { global: [], perAsset: {} });
+}
+
+function saveLearnedRules(rules){
+  lsSave('learned_rules_v1', rules);
+}
+
+// Build context string to inject into AI prompts
+function getLearnedRulesContext(asset){
+  var rules = getLearnedRules();
+  var lines = [];
+
+  // Global rules
+  if(rules.global && rules.global.length){
+    rules.global.forEach(function(r){
+      if(r.confidence >= 60) lines.push('- [GLOBAAL] '+r.description+' (gebaseerd op '+r.basedOn+' analyses, '+r.confidence+'% betrouwbaar)');
+    });
+  }
+
+  // Asset-specific rules
+  if(asset && rules.perAsset && rules.perAsset[asset]){
+    rules.perAsset[asset].forEach(function(r){
+      if(r.confidence >= 55) lines.push('- ['+asset+'] '+r.description+' ('+r.basedOn+' analyses, '+r.confidence+'% betrouwbaar)');
+    });
+  }
+
+  if(!lines.length) return '';
+  return 'GELEERDE REGELS (pas deze toe bij je analyse):\n' + lines.join('\n');
+}
+
+// ── Main self-learning function ───────────────────────────────
+async function selfLearnFromResults(newCheckedCount){
+  var analyses = lsLoad('analyses_v1', []);
+  var checked  = analyses.filter(function(a){ return a.verdict && a.autoGenerated; });
+  if(checked.length < 5) return; // need minimum data
+
+  apLog('info', 'Zelflerend systeem actief — patronen herberekenen...');
+
+  // 1. Recalculate statistical rules (no API needed)
+  var rules = extractStatisticalRules(checked);
+  saveLearnedRules(rules);
+
+  // 2. Every 20 new checked analyses → ask AI to extract deeper lessons
+  var lastAiLearnCount = lsLoad('last_ai_learn_count', 0);
+  if(checked.length - lastAiLearnCount >= 20){
+    apLog('info', 'Genoeg nieuwe data — AI lessen ophalen...');
+    await extractAiLessons(checked, rules);
+    lsSave('last_ai_learn_count', checked.length);
+  }
+
+  // 3. Update learn panel if visible
+  var learnPanel = document.getElementById('panel-learn');
+  if(learnPanel && learnPanel.classList.contains('active')){
+    renderLearn();
+  }
+
+  // 4. Update progress display
+  updateApProgress();
+
+  var wr = checked.length ? Math.round(checked.filter(function(a){return a.verdict==='correct';}).length/checked.length*100) : 0;
+  apLog('info', 'Leren klaar — '+rules.global.length+' globale regels, win rate: '+wr+'%');
+}
+
+// ── Statistical rule extraction ───────────────────────────────
+function extractStatisticalRules(checked){
+  var rules = { global: [], perAsset: {} };
+  var correct = checked.filter(function(a){ return a.verdict==='correct'; });
+
+  // ── Global rules ──
+  // 1. Signal type accuracy
+  var sigStats = buildStats(checked, function(a){ return a.signaal; });
+  Object.entries(sigStats).forEach(function(e){
+    var sig = e[0], d = e[1];
+    if(d.t < 3) return;
+    var pct = Math.round(d.c/d.t*100);
+    if(pct <= 40){
+      rules.global.push({
+        type: 'avoid_signal',
+        description: 'Vermijd '+sig+' signalen — slechts '+pct+'% correct',
+        confidence: Math.min(95, 40 + d.t*2),
+        basedOn: d.t
+      });
+    } else if(pct >= 65){
+      rules.global.push({
+        type: 'prefer_signal',
+        description: 'Geef voorkeur aan '+sig+' signalen — '+pct+'% correct',
+        confidence: Math.min(95, 40 + d.t*2),
+        basedOn: d.t
+      });
+    }
+  });
+
+  // 2. Kracht accuracy
+  var krachtStats = buildStats(checked, function(a){ return a.kracht||'Onbekend'; });
+  Object.entries(krachtStats).forEach(function(e){
+    var k = e[0], d = e[1];
+    if(d.t < 3) return;
+    var pct = Math.round(d.c/d.t*100);
+    if(k === 'Zwak' && pct < 50){
+      rules.global.push({
+        type: 'avoid_weak',
+        description: 'Zwakke signalen zijn slechts '+pct+'% correct — skip ze',
+        confidence: Math.min(90, 45 + d.t*2),
+        basedOn: d.t
+      });
+    }
+    if(k === 'Sterk' && pct >= 60){
+      rules.global.push({
+        type: 'prefer_strong',
+        description: 'Sterke signalen zijn '+pct+'% correct — prioriteer deze',
+        confidence: Math.min(90, 45 + d.t*2),
+        basedOn: d.t
+      });
+    }
+  });
+
+  // 3. Day of week patterns
+  var dayNames = {1:'Maandag',2:'Dinsdag',3:'Woensdag',4:'Donderdag',5:'Vrijdag'};
+  var dayStats = {};
+  checked.forEach(function(a){
+    var d = getDayFromDate(a.date);
+    if(d<1||d>5) return;
+    if(!dayStats[d]) dayStats[d]={c:0,t:0,name:dayNames[d]};
+    dayStats[d].t++;
+    if(a.verdict==='correct') dayStats[d].c++;
+  });
+  Object.values(dayStats).forEach(function(d){
+    if(d.t < 4) return;
+    var pct = Math.round(d.c/d.t*100);
+    if(pct <= 40){
+      rules.global.push({
+        type: 'avoid_day',
+        description: d.name+' is jouw slechtste dag ('+pct+'% correct) — wees extra voorzichtig',
+        confidence: Math.min(85, 40 + d.t*3),
+        basedOn: d.t
+      });
+    } else if(pct >= 70){
+      rules.global.push({
+        type: 'best_day',
+        description: d.name+' is jouw beste dag ('+pct+'% correct)',
+        confidence: Math.min(85, 40 + d.t*3),
+        basedOn: d.t
+      });
+    }
+  });
+
+  // ── Per-asset rules ──
+  var assetStats = {};
+  checked.forEach(function(a){
+    if(!assetStats[a.asset]) assetStats[a.asset] = [];
+    assetStats[a.asset].push(a);
+  });
+
+  Object.entries(assetStats).forEach(function(e){
+    var asset = e[0], assetAnalyses = e[1];
+    if(assetAnalyses.length < 4) return;
+    rules.perAsset[asset] = [];
+
+    // Asset win rate
+    var assetCorrect = assetAnalyses.filter(function(a){return a.verdict==='correct';}).length;
+    var assetPct = Math.round(assetCorrect/assetAnalyses.length*100);
+    if(assetPct <= 40){
+      rules.perAsset[asset].push({
+        type: 'asset_underperform',
+        description: asset+' is moeilijk te voorspellen ('+assetPct+'% correct) — wees extra voorzichtig',
+        confidence: Math.min(90, 40 + assetAnalyses.length*2),
+        basedOn: assetAnalyses.length
+      });
+    } else if(assetPct >= 65){
+      rules.perAsset[asset].push({
+        type: 'asset_outperform',
+        description: 'Jij begrijpt '+asset+' goed — '+assetPct+'% correct',
+        confidence: Math.min(90, 40 + assetAnalyses.length*2),
+        basedOn: assetAnalyses.length
+      });
+    }
+
+    // Asset signal preferences
+    var assetSigStats = buildStats(assetAnalyses, function(a){return a.signaal;});
+    Object.entries(assetSigStats).forEach(function(se){
+      var sig = se[0], sd = se[1];
+      if(sd.t < 3) return;
+      var pct = Math.round(sd.c/sd.t*100);
+      if(pct >= 70){
+        rules.perAsset[asset].push({
+          type: 'asset_signal_good',
+          description: sig+' signalen op '+asset+' werken goed ('+pct+'%)',
+          confidence: Math.min(90, 45 + sd.t*3),
+          basedOn: sd.t
+        });
+      } else if(pct <= 35){
+        rules.perAsset[asset].push({
+          type: 'asset_signal_bad',
+          description: sig+' signalen op '+asset+' werken slecht ('+pct+'%) — vermijd',
+          confidence: Math.min(90, 45 + sd.t*3),
+          basedOn: sd.t
+        });
+      }
+    });
+  });
+
+  return rules;
+}
+
+// ── AI lesson extraction ──────────────────────────────────────
+async function extractAiLessons(checked, currentRules){
+  var correct = checked.filter(function(a){return a.verdict==='correct';});
+  var wrong   = checked.filter(function(a){return a.verdict==='wrong';});
+  var wr = Math.round(correct.length/checked.length*100);
+
+  // Build summary of recent wrong analyses
+  var recentWrong = wrong.slice(0,8).map(function(a,i){
+    var diff = (a.entryPrice&&a.checkPrice)?((a.checkPrice-a.entryPrice)/a.entryPrice*100).toFixed(2):null;
+    return (i+1)+'. '+a.asset+' '+a.signaal+(a.kracht?' ('+a.kracht+')':'')+' op '+a.date
+      +(diff?' — koers ging '+(parseFloat(diff)>=0?'+':'')+diff+'%':'')
+      +'. Nieuws: '+a.samenvatting;
+  }).join('\n');
+
+  // Current statistical rules summary
+  var currentRulesSummary = currentRules.global.map(function(r){return '- '+r.description;}).join('\n');
+
+  try{
+    var r = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        messages:[{role:'user', content:
+          'Je bent een trading coach die een zelflerende AI helpt beter te worden.\n\n'
+          +'STATISTIEKEN:\n'
+          +'Win rate: '+wr+'% ('+correct.length+' correct, '+wrong.length+' fout)\n\n'
+          +'STATISTISCHE REGELS DIE AL GEVONDEN ZIJN:\n'+(currentRulesSummary||'Nog geen')+'\n\n'
+          +'RECENTE FOUTEN:\n'+recentWrong+'\n\n'
+          +'Analyseer de fouten en geef 3-5 nieuwe CONCRETE regels die het systeem bij volgende analyses moet toepassen.\n'
+          +'Focus op patronen die de statistieken NIET al hebben gevonden.\n\n'
+          +'Geef ALLEEN een JSON array, geen andere tekst:\n'
+          +'[{"regel":"concrete regel die het systeem bij elke analyse moet volgen","reden":"waarom deze regel","type":"global of asset-specific"}]'
+        }]
+      })
+    });
+    if(!r.ok) return;
+    var data = await r.json();
+    var raw = (data.content||[]).map(function(b){return b.text||'';}).join('').replace(/```json|```/g,'').trim();
+    var aiRules = JSON.parse(raw);
+
+    // Merge AI rules into learned rules as global rules
+    var rules = getLearnedRules();
+    aiRules.forEach(function(ar){
+      if(!ar.regel) return;
+      // Check if similar rule already exists
+      var exists = rules.global.some(function(r){ return r.description.slice(0,30)===ar.regel.slice(0,30); });
+      if(!exists){
+        rules.global.push({
+          type: 'ai_learned',
+          description: ar.regel,
+          reden: ar.reden||'',
+          confidence: 70,
+          basedOn: checked.length
+        });
+      }
+    });
+    saveLearnedRules(rules);
+    apLog('info', aiRules.length+' nieuwe AI regels geleerd en opgeslagen');
+
+    // Also save as readable lessons for learn panel
+    lsSave('ai_lessons_cache', {
+      date: new Date().toLocaleDateString('nl-NL'),
+      lessons: aiRules.map(function(r){ return {titel: r.type==='global'?'Globale regel':'Specifieke regel', les: r.regel, actie: r.reden||'Pas dit toe bij de volgende analyse'}; })
+    });
+
+  } catch(e){
+    apLog('error', 'AI les extractie mislukt: '+e.message);
+  }
+}
+
+// ── Learned rules panel display ───────────────────────────────
+function renderLearnedRulesPanel(){
+  var rules = getLearnedRules();
+  var el = document.getElementById('learnedRulesPanel');
+  if(!el) return;
+
+  var allRules = (rules.global||[]).concat(
+    Object.entries(rules.perAsset||{}).reduce(function(acc, e){
+      return acc.concat(e[1].map(function(r){ r._asset=e[0]; return r; }));
+    }, [])
+  ).filter(function(r){ return r.confidence >= 55; })
+   .sort(function(a,b){ return b.confidence-a.confidence; });
+
+  if(!allRules.length){
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:4px">Nog geen geleerde regels — auto pilot moet eerst analyses checken</div>';
+    return;
+  }
+
+  el.innerHTML = allRules.map(function(r){
+    var isAsset = r._asset;
+    var barW = Math.min(100, r.confidence);
+    var barColor = r.confidence>=75?'var(--green)':r.confidence>=60?'var(--amber)':'var(--red)';
+    return '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:6px">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">'
+        +(isAsset?'<span style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--blue);background:var(--blue-dim);padding:1px 7px;border-radius:10px">'+r._asset+'</span>':'<span style="font-family:var(--mono);font-size:10px;color:var(--text3);background:var(--bg3);padding:1px 7px;border-radius:10px">globaal</span>')
+        +'<div style="font-size:12px;color:var(--text2);flex:1">'+r.description+'</div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<div style="flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden"><div style="width:'+barW+'%;height:100%;background:'+barColor+'"></div></div>'
+        +'<div style="font-size:10px;font-family:var(--mono);color:var(--text3)">'+r.confidence+'% zeker | n='+r.basedOn+'</div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// DATA EXPORT / IMPORT — volledige kennisback-up
+// ═══════════════════════════════════════════════════════════════
+
+var DATA_KEYS = [
+  'analyses_v1',
+  'trades_v2',
+  'learned_rules_v1',
+  'session_history',
+  'last_snapshot',
+  'ai_lessons_cache',
+  'ap_analyzed_hashes',
+  'last_ai_learn_count',
+  'focus_tickers',
+  'watchlist_v1',
+  'alarms_v1'
+];
+// Note: API keys (td_key, fh_key, portfolio_val, user_name) worden bewust NIET meegenomen
+// zodat je ze handmatig instelt op een nieuw apparaat — veiliger
+
+var pendingImportData = null;
+
+// ── Export ────────────────────────────────────────────────────
+function exportAllData(){
+  var exportObj = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    exportedAtReadable: new Date().toLocaleString('nl-NL'),
+    appName: 'Trading Analyzer',
+    data: {}
+  };
+
+  DATA_KEYS.forEach(function(key){
+    try{
+      var raw = localStorage.getItem(key);
+      exportObj.data[key] = raw ? JSON.parse(raw) : null;
+    } catch(e){
+      exportObj.data[key] = null;
+    }
+  });
+
+  // Build summary for display
+  var analyses  = exportObj.data['analyses_v1'] || [];
+  var trades    = exportObj.data['trades_v2'] || [];
+  var rules     = exportObj.data['learned_rules_v1'] || {global:[],perAsset:{}};
+  var sessions  = exportObj.data['session_history'] || [];
+  var checked   = analyses.filter(function(a){return a.verdict;});
+  var correct   = checked.filter(function(a){return a.verdict==='correct';});
+  var wr        = checked.length ? Math.round(correct.length/checked.length*100) : null;
+  var autoCount = analyses.filter(function(a){return a.autoGenerated;}).length;
+  var globalRules = (rules.global||[]).length;
+  var assetRules  = Object.values(rules.perAsset||{}).reduce(function(s,v){return s+v.length;},0);
+
+  // Show modal with summary
+  document.getElementById('dataModalTitle').textContent = 'Data exporteren';
+  document.getElementById('dataModalAction').textContent = 'Download JSON';
+  document.getElementById('dataModalAction').onclick = function(){ doExportDownload(exportObj); };
+  document.getElementById('dataModalContent').innerHTML =
+    '<div class="export-section">'
+      +'<div class="export-section-title">Wat wordt opgeslagen</div>'
+      +'<div class="export-item"><span class="export-item-label">Analyses (handmatig)</span><span class="export-item-count">'+(analyses.length-autoCount)+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Analyses (auto pilot)</span><span class="export-item-count">'+autoCount+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Gecheckte resultaten</span><span class="export-item-count">'+checked.length+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Win rate</span><span class="export-item-count">'+(wr!==null?wr+'%':'—')+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Geleerde regels (globaal)</span><span class="export-item-count">'+globalRules+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Geleerde regels (per asset)</span><span class="export-item-count">'+assetRules+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Trades in logboek</span><span class="export-item-count">'+trades.length+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Sessies opgeslagen</span><span class="export-item-count">'+sessions.length+'</span></div>'
+    +'</div>'
+    +'<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:12px">'
+      +'Dit bestand bevat alle kennis van het systeem. Sla het op een veilige plek op. '
+      +'Bij een update van de app importeer je dit bestand en alle kennis is hersteld.'
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--text3);font-family:var(--mono)">API keys worden niet meegenomen — die stel je handmatig in.</div>'
+    +'<div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px">'
+      +'<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;font-family:var(--mono);margin-bottom:8px">Handmatige kennis importeren</div>'
+      +'<div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6">Importeer handgeschreven trading regels als JSON — bijv. van je vader. Die worden direct als geleerde regels in het systeem geladen.</div>'
+      +'<button id="knowledgeImportBtn" style="padding:8px 14px;background:transparent;border:1px solid var(--border2);color:var(--text);border-radius:7px;font-size:12px;cursor:pointer;width:100%">Kennis JSON importeren</button>'
+      +'<input type="file" id="knowledgeFileInput" accept=".json" style="display:none"/>'
+    +'</div>';
+
+  document.getElementById('dataModal').classList.add('open');
+}
+
+function doExportDownload(exportObj){
+  var json    = JSON.stringify(exportObj, null, 2);
+  var blob    = new Blob([json], {type:'application/json;charset=utf-8;'});
+  var url     = URL.createObjectURL(blob);
+  var date    = new Date().toISOString().split('T')[0];
+  var analyses= (exportObj.data['analyses_v1']||[]);
+  var checked = analyses.filter(function(a){return a.verdict;});
+  var wr      = checked.length ? Math.round(checked.filter(function(a){return a.verdict==='correct';}).length/checked.length*100) : 0;
+  var a       = document.createElement('a');
+  a.href      = url;
+  a.download  = 'trading_analyzer_backup_'+date+'_wr'+wr+'pct.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  closeDataModal();
+}
+
+// ── Import ────────────────────────────────────────────────────
+function importAllData(event){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var importObj = JSON.parse(e.target.result);
+      if(!importObj.data || !importObj.appName){
+        alert('Ongeldig bestand — dit is geen Trading Analyzer backup.');
+        return;
+      }
+      pendingImportData = importObj;
+      showImportPreview(importObj);
+    } catch(err){
+      alert('Kon bestand niet lezen: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+  // Reset input so same file can be selected again
+  event.target.value = '';
+}
+
+function showImportPreview(importObj){
+  var analyses  = importObj.data['analyses_v1'] || [];
+  var trades    = importObj.data['trades_v2'] || [];
+  var rules     = importObj.data['learned_rules_v1'] || {global:[],perAsset:{}};
+  var checked   = analyses.filter(function(a){return a.verdict;});
+  var correct   = checked.filter(function(a){return a.verdict==='correct';});
+  var wr        = checked.length ? Math.round(correct.length/checked.length*100) : null;
+  var autoCount = analyses.filter(function(a){return a.autoGenerated;}).length;
+  var globalRules = (rules.global||[]).length;
+  var assetRules  = Object.values(rules.perAsset||{}).reduce(function(s,v){return s+v.length;},0);
+
+  // Current data counts for comparison
+  var curAnalyses = lsLoad('analyses_v1',[]);
+  var curChecked  = curAnalyses.filter(function(a){return a.verdict;});
+
+  document.getElementById('dataModalTitle').textContent = 'Data importeren';
+  document.getElementById('dataModalAction').textContent = 'Importeren — data overschrijven';
+  document.getElementById('dataModalAction').onclick = confirmImport;
+  document.getElementById('dataModalContent').innerHTML =
+    '<div class="import-warning">'
+      +'Let op: importeren overschrijft je huidige data. Exporteer eerst als je huidige data wil bewaren.'
+    +'</div>'
+    +'<div class="import-preview">'
+      +'Backup van: '+importObj.exportedAtReadable+'\n'
+      +'Analyses: '+analyses.length+' ('+autoCount+' auto pilot)\n'
+      +'Gecheckt: '+checked.length+(wr!==null?' — win rate '+wr+'%':'')+'\n'
+      +'Geleerde regels: '+(globalRules+assetRules)+' ('+globalRules+' globaal, '+assetRules+' per asset)\n'
+      +'Trades: '+trades.length
+    +'</div>'
+    +'<div class="export-section">'
+      +'<div class="export-section-title">Huidige data vs import</div>'
+      +'<div class="export-item"><span class="export-item-label">Huidige analyses</span><span class="export-item-count">'+curAnalyses.length+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Huidige gecheckt</span><span class="export-item-count">'+curChecked.length+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Import analyses</span><span class="export-item-count">'+analyses.length+'</span></div>'
+      +'<div class="export-item"><span class="export-item-label">Import gecheckt</span><span class="export-item-count">'+checked.length+'</span></div>'
+    +'</div>';
+
+  document.getElementById('dataModal').classList.add('open');
+}
+
+function confirmImport(){
+  if(!pendingImportData) return;
+  var importObj = pendingImportData;
+  var imported  = 0;
+
+  DATA_KEYS.forEach(function(key){
+    if(importObj.data[key] !== null && importObj.data[key] !== undefined){
+      try{
+        localStorage.setItem(key, JSON.stringify(importObj.data[key]));
+        imported++;
+      } catch(e){}
+    }
+  });
+
+  pendingImportData = null;
+  closeDataModal();
+
+  // Reload app state
+  trades    = lsLoad('trades_v2', []);
+  watchlist = lsLoad('watchlist_v1', ['AAPL','NVDA','USOIL']);
+  alarms    = lsLoad('alarms_v1', []);
+  focusTickers = lsLoad('focus_tickers', ['NVDA','USOIL','AAPL']);
+
+  renderTrades();
+  renderWatchlistGrid();
+  renderAlarms();
+  renderFocusPills();
+  updateApProgress();
+
+  alert('Import geslaagd — '+imported+' datablokken hersteld. Alle kennis is terug.');
+}
+
+function confirmDataAction(){
+  // Fallback — should be overridden by specific action
+}
+
+function closeDataModal(){
+  document.getElementById('dataModal').classList.remove('open');
+  pendingImportData = null;
+}
+
+
+// ── Knowledge import (pa's regels etc) ───────────────────────
+function importKnowledge(event){
+  var file = event.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      var obj = JSON.parse(e.target.result);
+      if(!obj.rules && !obj.global && !obj.knowledge){
+        alert('Ongeldig kennisbestand — verwacht een JSON met "rules" array.');
+        return;
+      }
+      var rules = getLearnedRules();
+      var rulesArr = obj.rules || obj.global || obj.knowledge || [];
+      var added = 0;
+      rulesArr.forEach(function(r){
+        if(!r.description && !r.regel && !r.rule) return;
+        var desc = r.description || r.regel || r.rule;
+        // Check duplicate
+        var exists = rules.global.some(function(x){ return x.description.slice(0,40)===desc.slice(0,40); });
+        if(!exists){
+          rules.global.push({
+            type: r.type || 'manual_knowledge',
+            description: desc,
+            reden: r.reden || r.reason || r.toelichting || '',
+            confidence: r.confidence || 90,
+            basedOn: r.basedOn || 'handmatig',
+            manual: true
+          });
+          added++;
+        }
+      });
+      saveLearnedRules(rules);
+      closeDataModal();
+      alert(added+' regels toegevoegd aan het systeem. Ze worden direct toegepast bij de volgende analyse.');
+      event.target.value = '';
+    } catch(err){
+      alert('Kon bestand niet lezen: '+err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+init();
+</script>
+</body>
+</html>
